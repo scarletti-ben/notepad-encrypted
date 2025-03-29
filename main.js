@@ -243,7 +243,7 @@ function main() {
     Switcher.toggleFooter(false);
 
     // > Init
-    Core.init(false);
+    Core.init(true);
 
     if (Core.data.highlighted) {
         let noteUUID = Core.data.highlighted;
