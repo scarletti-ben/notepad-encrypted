@@ -234,8 +234,8 @@ class Core {
 
 function main() {
 
-    // > Add console access for Swicher
-    window.Switcher = Switcher;
+    // > Add console access for Core
+    window.Core = Core;
 
     // > Initialise Switcher
     Switcher.init('page');
