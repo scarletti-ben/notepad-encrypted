@@ -1,0 +1,149 @@
+/* < ====================================================== !
+< Styling for TabSwitcher
+< ====================================================== ! */
+
+.switcher {
+  --curviness: 16px;
+  --text-color: white;
+  --notch-height: 32px;
+  --notch-width: 64px;
+  --notch-gap: 8px;
+  --notch-color: rgb(60, 60, 60);
+  --alternate-color: black;
+  --scrollbar-color: var(--alternate-color) transparent;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-color);
+}
+
+.switcher .hidden {
+  display: none !important;
+}
+
+.switcher .highlighted {
+  background-color: var(--alternate-color) !important;
+}
+
+.switcher .bordered {
+  border: 3px solid var(--alternate-color);
+}
+
+.switcher .top-section {
+  width: 100%;
+  height: var(--notch-height);
+  box-sizing: border-box;
+  padding: 0px var(--curviness);
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: var(--notch-gap);
+  flex-grow: 0 !important;
+}
+
+.switcher .ribbon {
+  width: auto;
+  height: var(--notch-height);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  gap: var(--notch-gap);
+}
+
+.switcher .notch {
+  width: var(--notch-width);
+  height: var(--notch-height);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+  border-radius: var(--curviness) var(--curviness) 0px 0px;
+  background-color: var(--notch-color);
+  user-select: none;
+  cursor: pointer;
+  background-color: var(--notch-color);
+}
+
+.switcher .notch:hover {
+  opacity: 0.5;
+}
+
+.switcher .bottom-section {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 0 !important;
+  overflow: hidden;
+}
+
+.switcher .viewport {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  box-sizing: border-box;
+  border-radius: var(--curviness);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.switcher .frame {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.switcher .pane {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  overflow: auto;
+}
+
+.switcher .header {
+  width: 100%;
+  height: var(--notch-height);
+  box-sizing: border-box;
+  padding: 0px var(--curviness);
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  flex-shrink: 0;
+  background-color: var(--alternate-color);
+}
+
+.switcher .footer {
+  width: 100%;
+  height: var(--notch-height);
+  box-sizing: border-box;
+  padding: 0px var(--curviness);
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  flex-shrink: 0;
+  background-color: var(--alternate-color);
+}
