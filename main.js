@@ -234,6 +234,9 @@ class Core {
 
 function main() {
 
+    // > Add console access for Swicher
+    window.Switcher = Switcher;
+
     // > Initialise Switcher
     Switcher.init('page');
     Switcher.toggleBorder(true);
