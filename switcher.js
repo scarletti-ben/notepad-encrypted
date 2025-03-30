@@ -34,7 +34,10 @@ export class Tab {
         this.notch = this._createNotch();
     }
 
-    /** @returns {HTMLDivElement} */
+    /** 
+     * Create the pane element for the tab instance and return
+     * @returns {HTMLDivElement} The created pane element
+     */
     _createPane() {
         let pane = document.createElement('div');
         pane.classList.add('pane', 'hidden');
@@ -43,7 +46,10 @@ export class Tab {
         return pane;
     }
 
-    /** @returns {HTMLDivElement} */
+    /** 
+     * Create the notch element for the tab instance and return
+     * @returns {HTMLDivElement} The created notch element
+     */
     _createNotch() {
         let notch = document.createElement('div');
         notch.dataset.uuid = this.uuid;
@@ -88,6 +94,7 @@ export class Switcher {
 
     /**
      * Generate Switcher HTML structure inside a given container element
+     * and assign HTML elements to attributes of Switcher
      * @param {string} containerID - The ID of the container element
      */
     static init(containerID) {
@@ -102,12 +109,19 @@ export class Switcher {
         this.footer = this.element.querySelector('.footer');
     }
 
-    /** @param {string} uuid @returns {Tab} */
-    static getTab(uuid) {
-        return this.tabs.find(tab => tab.uuid === uuid);
+    /** 
+     * Get a tab instance from a given tabUUID
+     * @param {string} tabUUID - The uuid of the tab instance
+     * @returns {Tab | undefined} The tab instance
+     */
+    static getTab(tabUUID) {
+        return this.tabs.find(tab => tab.uuid === tabUUID);
     }
 
-    /** @param {Tab} tab */
+    /** 
+     * Highlight a specific tab notch, hide all other tab panes
+     * @param {Tab} tab - The tab instance to highlight
+     */
     static highlightTab(tab) {
         for (let instance of this.tabs) {
             tools.toggleHidden(instance.pane, instance !== tab);
@@ -115,7 +129,10 @@ export class Switcher {
         }
     }
 
-    /** @param {Tab} tab */
+    /** 
+     * Close a specific tab
+     * @param {Tab} tab - The tab instance to close
+     */
     static closeTab(tab) {
         this.frame.removeChild(tab.pane);
         this.ribbon.removeChild(tab.notch);
@@ -123,11 +140,38 @@ export class Switcher {
         console.log(`Switcher closed tab: ${tab.uuid}`);
     }
 
-    /** @param {Tab} tab */
+    /** 
+     * Add a tab instance to Switcher
+     * @param {Tab} tab - The tab instance to add
+     */
     static addTab(tab) {
         this.ribbon.appendChild(tab.notch);
         this.frame.appendChild(tab.pane);
         this.tabs.push(tab);
+    }
+
+    /** 
+     * Toggle or set visibility of Switcher header
+     * @param {boolean | undefined} shown - Toggles when undefined
+     */
+    static toggleHeader(shown) {
+        tools.toggleShown(this.header, shown);
+    }
+
+    /** 
+     * Toggle or set visibility of Switcher footer
+     * @param {boolean | undefined} shown - Toggles when undefined
+     */
+    static toggleFooter(shown) {
+        tools.toggleShown(this.footer, shown);
+    }
+
+    /** 
+     * Toggle or set the border of Switcher viewport
+     * @param {boolean | undefined} bordered - Toggles when undefined
+     */
+    static toggleBorder(bordered) {
+        tools.toggleBordered(this.viewport, bordered);
     }
 
     /**
@@ -152,24 +196,8 @@ export class Switcher {
             </div>
         </div>`;
         container.insertAdjacentHTML('beforeend', switcherHTML);
-        console.log(`TabSwitcher created switcher element with ID: ${switcherID}`)
+        console.log(`Switcher created HTML element with ID: ${switcherID}`)
         return switcherID;
-    }
-
-    // < ========================================================
-    // < 
-    // < ========================================================
-
-    static toggleHeader(force) {
-        tools.toggleHidden(this.header, force);
-    }
-
-    static toggleFooter(force) {
-        tools.toggleHidden(this.footer, force);
-    }
-
-    static toggleBorder(force) {
-        tools.toggleBordered(this.viewport, force);
     }
 
 }

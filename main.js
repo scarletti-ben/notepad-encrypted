@@ -5,6 +5,12 @@
 import { tools } from "./tools.js";
 import { Switcher, Tab } from "./switcher.js"
 
+// =========================================================
+// Notes
+// =========================================================
+
+// 'notepad-encrypyted-2025-03-29': {"highlighted":null,"opened":[],"notes":{}}
+
 // < ========================================================
 // < Note Class
 // < ========================================================
@@ -38,14 +44,22 @@ class Note {
         this.tab = this._createTab(this.textarea);
     }
 
-    /** @param {Object<string, { name: string, text: string }>} data */
+    /**
+     * Create a textarea element using the given data
+     * @param {Object<string, { name: string, text: string }>} data - The data object
+     * @returns {HTMLTextAreaElement} The created textarea element
+     */
     _createTextarea(data) {
         const textarea = document.createElement('textarea');
         textarea.value = data.text;
         return textarea;
     }
 
-    /** @param {HTMLTextAreaElement} textarea */
+    /**
+     * Create a div element as a container for the given textarea
+     * @param {HTMLDivElement} textarea - The textarea element
+     * @returns {Tab} The created div element
+     */
     _createTab(textarea) {
         const element = document.createElement('div');
         element.classList.add('note');
@@ -55,16 +69,20 @@ class Note {
         return tab;
     }
 
-    /** @param {string} uuid @returns {Note} */
-    static getNote(uuid) {
-        return Note.instances.find(note => note.uuid === uuid);
+    /**
+     * Get a Note instance from Note.instances using a given uuid
+     * @param {string} noteUUID - The uuid of the note
+     * @returns {Note} The Note instance
+     */
+    static getNote(noteUUID) {
+        return Note.instances.find(note => note.uuid === noteUUID);
     }
 
 }
 
-// < ========================================================
-// < Core Class
-// < ========================================================
+// ! ========================================================
+// ! Core Class
+// ! ========================================================
 
 /**
  * Core class to interface between other project components
@@ -135,7 +153,7 @@ class Core {
         console.log(`Core loaded all data from localStorage`);
     }
 
-    static save = tools.debounced(() => {
+    static save = tools.bottlenecked(() => {
         let dataJSON = JSON.stringify(Core.data);
         localStorage.setItem(Core.dataKey, dataJSON);
         console.log(`Core saved all data to localStorage`);
@@ -232,19 +250,26 @@ class Core {
 // < Entry Point
 // < ========================================================
 
+/**
+ * Entry point of the application
+ * - Initialises necessary components
+ */
 function main() {
 
-    // > Add console access for Core
+    // > Add devtools access to components
     window.Core = Core;
+    window.Switcher = Switcher;
+    window.tools = tools;
 
-    // > Initialise Switcher
+    // > Initialise the Switcher
     Switcher.init('page');
-    Switcher.toggleBorder(true);
+    Switcher.toggleBorder(false);
     Switcher.toggleFooter(false);
 
-    // > Init
+    // > Initialise the Core
     Core.init(false);
 
+    // > Highlight the previously highlighted note
     if (Core.data.highlighted) {
         let noteUUID = Core.data.highlighted;
         let note = Note.getNote(noteUUID);
@@ -252,7 +277,7 @@ function main() {
     }
 
     // ! ========================================================
-    // ! 
+    // ! Experimental
     // ! ========================================================
 
     let element = document.createElement('div');
@@ -271,5 +296,3 @@ function main() {
 // < ========================================================
 
 main();
-
-// 'notepad-encrypyted-2025-03-29': {"highlighted":null,"opened":[],"notes":{}}
