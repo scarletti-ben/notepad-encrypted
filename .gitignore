@@ -1,2 +1,3 @@
 # Patterns to be ignored, usually files and folders for local use
 _*
+.vscode
