@@ -1,0 +1,30 @@
+/* < ====================================================== !
+< Sprite Styling
+< ====================================================== ! */
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sprite {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  cursor: pointer;
+}
+
+.sprite svg {
+  width: 60%;
+  height: 60%;
+  fill: var(--foreground-colour);
+}

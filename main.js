@@ -3,13 +3,9 @@
 // < ========================================================
 
 import { tools } from "./tools.js";
+import { Sprite } from "./sprite.js";
+import { PBKDF2, encryptString, decryptString } from "./encryptor.js";
 import { Switcher, Tab } from "./switcher.js"
-
-// =========================================================
-// Notes
-// =========================================================
-
-// 'notepad-encrypyted-2025-03-29': {"highlighted":null,"opened":[],"notes":{}}
 
 // < ========================================================
 // < Note Class
@@ -81,6 +77,96 @@ class Note {
 }
 
 // ! ========================================================
+// ! Save Manager
+// ! ========================================================
+
+class SaveManager {
+
+    static dataKey = 'notepad-encrypyted-2025-03-31-data';
+    static ivKey = 'notepad-encrypyted-2025-03-31-iv';
+    static savingNow = false;
+    static savingSoon = false;
+    static delay = 3000;
+
+    /** 
+     * Implement custom asynchronous save function here
+     * @returns {Promise<null>}
+     */
+    static async _save() {
+        await tools.delay(500);
+        const string = JSON.stringify(Core.data);
+        const key = await PBKDF2("password", "salt");
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const encryptedString = await encryptString(string, key, iv);
+        localStorage.setItem(SaveManager.dataKey, encryptedString);
+        localStorage.setItem(SaveManager.ivKey, arrayBufferToBase64(iv));
+        console.log(`SaveManager saved all data to localStorage`);
+    }
+
+    /** 
+     * Implement custom asynchronous load function here
+     * @returns {Promise<object>}
+     */
+    static async _load() {
+        const key = await PBKDF2("password", "salt");
+        const iv = localStorage.getItem(SaveManager.ivKey);
+        let encryptedString = localStorage.getItem(SaveManager.dataKey);
+        const decryptedString = await decryptString(encryptedString, key, base64ToArrayBuffer(iv));
+        const data = JSON.parse(decryptedString);
+        console.log(`SaveManager loaded all data from localStorage`);
+        return data;
+    }
+
+    /** 
+     * Initiate an immediate save if none is in progress
+     * @returns {Promise<null>}
+     */
+    static async saveNow() {
+        if (this.savingNow) return;
+        this.savingNow = true;
+        try {
+            await this._save();
+            tools.dispatch('saved');
+        }
+        finally {
+            this.savingNow = false;
+        }
+    }
+
+    /** 
+     * Schedule a save after a delay unless one is queued or in progress
+     */
+    static saveSoon() {
+        if (this.savingSoon || this.savingNow) return;
+        this.savingSoon = true;
+        setTimeout(() => {
+            this.savingSoon = false;
+            this.saveNow();
+        }, this.delay);
+    }
+
+}
+
+function arrayBufferToBase64(buffer) {
+    var binaryString = '';
+    var bytes = new Uint8Array(buffer);
+    var len = bytes.byteLength;
+    for (var i = 0; i < len; i++) {
+        binaryString += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binaryString);
+}
+
+function base64ToArrayBuffer(base64) {
+    var binaryString = window.atob(base64);
+    var bytes = new Uint8Array(binaryString.length);
+    for (var i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+// ! ========================================================
 // ! Core Class
 // ! ========================================================
 
@@ -91,11 +177,24 @@ class Note {
  */
 class Core {
 
-    static dataKey = 'notepad-encrypyted-2025-03-29';
     static data = {
         highlighted: null,
         opened: [],
         notes: {}
+    }
+
+    /** @type {HTMLDivElement} sprite */
+    static sprite;
+
+    static reset() {
+        let data = {
+            highlighted: null,
+            opened: [],
+            notes: {}
+        }
+        let dataJSON = JSON.stringify(data);
+        localStorage.setItem(Core.dataKey, dataJSON);
+        console.log(`Core reset all data in localStorage`);
     }
 
     static highlightNote(note) {
@@ -146,32 +245,28 @@ class Core {
         return Core.createNote(noteUUID, noteData)
     }
 
-    static load() {
-        const dataJSON = localStorage.getItem(Core.dataKey);
-        const data = JSON.parse(dataJSON);
-        Core.data = data;
-        console.log(`Core loaded all data from localStorage`);
-    }
+    static async init() {
 
-    static save = tools.bottlenecked(() => {
-        let dataJSON = JSON.stringify(Core.data);
-        localStorage.setItem(Core.dataKey, dataJSON);
-        console.log(`Core saved all data to localStorage`);
-    }, 3000)
+        // > Load data from localStorage
+        Core.data = await SaveManager._load();
 
-    static init(resetting = false) {
-        if (resetting) {
-            Core.save()
-        } else {
-            Core.load();
-        }
+        // > Generate notes from data
         let noteUUIDS = [...Core.data.opened];
         for (let noteUUID of noteUUIDS) {
             let noteData = Core.data.notes[noteUUID];
             tools.assert(noteData !== undefined);
             Core.createNote(noteUUID, noteData);
         }
+
+        // > Highlight the previously highlighted note
+        if (Core.data.highlighted) {
+            let noteUUID = Core.data.highlighted;
+            let note = Note.getNote(noteUUID);
+            Core.highlightNote(note);
+        }
+
         console.log(`Core initialised`);
+
     }
 
     /** 
@@ -186,7 +281,7 @@ class Core {
         // > Highlight note when notch left clicked
         notch.addEventListener('click', (event) => {
             Core.highlightNote(note);
-            Core.save();
+            SaveManager.saveSoon();
         });
 
         // > Enable text editing when notch double clicked
@@ -201,7 +296,7 @@ class Core {
             if (notch.contentEditable) {
                 notch.contentEditable = false;
                 note.data.name = notch.innerText;
-                Core.save();
+                SaveManager.saveSoon();
             }
         });
 
@@ -209,7 +304,7 @@ class Core {
         notch.addEventListener('mousedown', (event) => {
             if (event.button === 1) {
                 Core.closeNote(note);
-                Core.save();
+                SaveManager.saveSoon();
             }
         });
 
@@ -217,26 +312,15 @@ class Core {
         notch.addEventListener('contextmenu', (event) => {
             event.preventDefault();
             Core.deleteNote(note);
-            Core.save();
+            SaveManager.saveSoon();
         });
 
         // > Save note text when textarea focus lost
         textarea.addEventListener('blur', (event) => {
             note.data.text = textarea.value;
-            Core.save();
+            SaveManager.saveSoon();
         })
 
-    }
-
-    // ! ========================================================
-    // ! Experimental Methods
-    // ! ========================================================
-
-    /** @param {Note} note */
-    static flashNote(note, ms = 200) {
-        note.tab.notch.style.transition = 'opacity 0.2s';
-        note.tab.notch.style.opacity = '0.5';
-        setTimeout(() => note.tab.notch.style.opacity = '1', ms);
     }
 
     /** Print Core.data object in a readable format */
@@ -247,6 +331,35 @@ class Core {
 }
 
 // < ========================================================
+// < Utility Functions
+// < ========================================================
+
+/** 
+ * 
+ * @param {Sprite} sprite
+ */
+const showRotateHide = (sprite) => {
+    sprite.swap('load');
+    sprite.rotate(3).then(() => {
+        sprite.swap('done');
+        setTimeout(() => {
+            sprite.swap('save');
+        }, 2000);
+    });
+}
+
+async function test() {
+    let password = prompt("Password: ");
+    let salt = prompt("Salt: ");
+    let text = prompt("Text: ");
+    let iv = crypto.getRandomValues(new Uint8Array(12));
+    let key = await PBKDF2(password, salt);
+    let encryptedString = await encryptString(text, key, iv);
+    let decryptedString = await decryptString(encryptedString, key, iv);
+    alert(`Decrypted: ${decryptedString}`);
+}
+
+// < ========================================================
 // < Entry Point
 // < ========================================================
 
@@ -254,40 +367,95 @@ class Core {
  * Entry point of the application
  * - Initialises necessary components
  */
-function main() {
+async function main() {
 
     // > Add devtools access to components
     window.Core = Core;
     window.Switcher = Switcher;
-    window.tools = tools;
 
     // > Initialise the Switcher
     Switcher.init('page');
-    Switcher.toggleBorder(false);
+    Switcher.toggleBorder(true);
     Switcher.toggleFooter(false);
 
-    // > Initialise the Core
-    Core.init(false);
+    // > Optionally reset the Core
+    // Core.reset();
 
-    // > Highlight the previously highlighted note
-    if (Core.data.highlighted) {
-        let noteUUID = Core.data.highlighted;
-        let note = Note.getNote(noteUUID);
-        Core.highlightNote(note);
-    }
+    // > Initialise the Core
+    await Core.init();
 
     // ! ========================================================
     // ! Experimental
     // ! ========================================================
 
-    let element = document.createElement('div');
+    // > Add the menu button
+    var element = document.createElement('div');
+    element.innerText = '=';
+    element.classList.add('notch');
+    element.title = 'show menu'
+    Switcher.top.insertBefore(element, Switcher.top.firstChild);
+    element.addEventListener('click', () => {
+        Switcher.toggleHeader();
+        // Core.print();
+    })
+
+    // > Add the new tab button
+    var element = document.createElement('div');
     element.innerText = '+';
     element.classList.add('notch');
     Switcher.top.appendChild(element);
     element.addEventListener('click', () => {
         Core.blankNote();
-        Core.print();
     })
+
+    // > Add the reset button
+    var element = document.createElement('div');
+    element.innerText = 'R';
+    element.classList.add('notch');
+    Switcher.top.appendChild(element);
+    element.addEventListener('click', () => {
+        Core.reset();
+    })
+
+    // > Add the soon button
+    var element = document.createElement('div');
+    element.innerText = 'Soon';
+    element.classList.add('notch');
+    Switcher.top.appendChild(element);
+    element.addEventListener('click', () => {
+        SaveManager.saveSoon();
+    })
+
+    // > Add the now button
+    var element = document.createElement('div');
+    element.innerText = 'Now';
+    element.classList.add('notch');
+    Switcher.top.appendChild(element);
+    element.addEventListener('click', () => {
+        SaveManager.saveNow();
+    })
+
+    // > Add the load button
+    var element = document.createElement('div');
+    element.innerText = 'Load';
+    element.classList.add('notch');
+    Switcher.top.appendChild(element);
+    element.addEventListener('click', () => {
+        SaveManager._load();
+    })
+
+    // > Add the autosave sprite
+    let sprite = new Sprite("test", "save");
+    sprite.element.addEventListener('click', () => {
+        SaveManager.saveNow();
+    })
+    Switcher.top.appendChild(sprite.element);
+    Core.sprite = sprite;
+
+    // > Spin the autosave icon when save occurs
+    tools.respond('saved', () => {
+        showRotateHide(Core.sprite);
+    });
 
 }
 

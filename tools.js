@@ -143,6 +143,43 @@ export const tools = {
     // Other Tools
     // ==========================================================
 
+    /** 
+     * Dispatch a custom user event with a given flavour
+     * - This custom event can only be picked up by document
+     * - The flavour of the event can be any string you want
+     * - The detail object should use strings as key / value pairs
+     * @param {string} flavour - The flavour of event
+     * @param {object} [detail={}] - Additional event data
+     * @returns {string} - The dispatched event name
+     */
+    dispatch(flavour, detail = {}) {
+        const eventName = `UserEvent:${flavour}`;
+        const event = new CustomEvent(eventName, { detail });
+        document.dispatchEvent(event);
+        return eventName;
+    },
+
+    /** 
+     * Add listener to document for a custom user event with a given flavour
+     * @param {string} flavour - The flavour of event to respond to
+     * @param {Function} callback - The callback function
+     */
+    respond(flavour, callback) {
+        document.addEventListener(`UserEvent:${flavour}`, (event) => callback(event));
+    },
+
+    /** 
+     * Create a time delay via setTimeout within a Promise object
+     * - The returned Promise object resolves when setTimeout ends
+     * - Allows for awaiting eg. await delay(1000)
+     * - Allows .then chaining eg. delay(1000).then(() => func())
+     * @param {number} [ms=1000] - Time to wait in milliseconds
+     * @returns {Promise} - An awaitable Promise that allows .then
+     */
+    delay(ms = 1000) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    },
+
     /**
      * Get the current date and time as an ISO 8601 string (YYYY-MM-DDTHH:mm:ss.sssZ)
      * @returns {string} The current date and time in ISO 8601 format
@@ -209,7 +246,7 @@ export const tools = {
      * - Returns a Promise object allowing .then() chaining
      * @param {(progress: number)} callback - Callback that takes ticker progress (decimal 0 to 1)
      * @param {number} duration - The duration in milliseconds for the ticker to run for
-     * @returns {Promise<boolean>} A promise that resolves true when the ticker is finished
+     * @returns {Promise} A promise that resolves when the ticker is finished
      */
     animationTicker(callback, duration) {
         return new Promise((resolve) => {
@@ -222,7 +259,7 @@ export const tools = {
                 if (progress < 1) {
                     requestAnimationFrame(tick);
                 } else {
-                    resolve(true);
+                    resolve();
                 }
             }
             requestAnimationFrame(tick);
@@ -232,6 +269,14 @@ export const tools = {
     // > ========================================================
     // > II: HTML and CSS Tools
     // > ========================================================
+
+    /** 
+     * Force reflow for an element, using an arbitrary attribute
+     * @param {HTMLElement} element - The element to reflow
+     */
+    reflow(element) {
+        void element.offsetHeight;
+    },
 
     /** 
      * Select all content within an HTML element
