@@ -108,7 +108,7 @@ export async function decryptString(encryptedString, key, iv) {
     for (let i = 0; i < binaryString.length; i++) {
         encryptedBytes[i] = binaryString.charCodeAt(i);
     }
-    
+
     // console.warn(encryptedBytes);
 
     // > Define decrypt arguments
@@ -183,5 +183,37 @@ export function base64ToArrayBuffer(base64) {
 }
 
 // ! ========================================================
-// ! Derive Key from Saved Token
+// ! Testing
 // ! ========================================================
+
+async function main(params) {
+
+    // >
+    const data = {
+        'notes': ['note']
+    }
+    const separator = ','
+    console.log(JSON.stringify(data, null, 2));
+
+    // >
+    let password = prompt("Password: ");
+    let salt = prompt("Salt: ");
+    let cryptoKey = await PBKDF2(password, salt);
+
+    // >
+    const dataString = JSON.stringify(data);
+    const ivArrayBuffer = crypto.getRandomValues(new Uint8Array(12));
+    const encryptedBase64 = await encryptString(dataString, cryptoKey, ivArrayBuffer);
+    const ivBase64 = arrayBufferToBase64(ivArrayBuffer);
+    const storageBase64 = encryptedBase64 + separator + ivBase64;
+
+    // >
+    const [_encryptedBase64, _ivBase64] = storageBase64.split(separator);
+    const _ivArrayBuffer = base64ToArrayBuffer(_ivBase64);
+    const _dataString = await decryptString(_encryptedBase64, cryptoKey, _ivArrayBuffer);
+    const _data = JSON.parse(_dataString);
+    console.log(JSON.stringify(_data, null, 2));
+
+}
+
+await main();

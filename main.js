@@ -6,6 +6,7 @@ import { tools } from "./tools.js";
 import { Sprite } from "./sprite.js";
 import { PBKDF2, encryptString, decryptString } from "./encryptor.js";
 import { Switcher, Tab } from "./switcher.js"
+import { SaveManager } from "./save-manager.js"
 
 // < ========================================================
 // < Note Class
@@ -74,96 +75,6 @@ class Note {
         return Note.instances.find(note => note.uuid === noteUUID);
     }
 
-}
-
-// ! ========================================================
-// ! Save Manager
-// ! ========================================================
-
-class SaveManager {
-
-    static dataKey = 'notepad-encrypyted-2025-03-31-data';
-    static ivKey = 'notepad-encrypyted-2025-03-31-iv';
-    static savingNow = false;
-    static savingSoon = false;
-    static delay = 3000;
-
-    /** 
-     * Implement custom asynchronous save function here
-     * @returns {Promise<null>}
-     */
-    static async _save() {
-        await tools.delay(500);
-        const string = JSON.stringify(Core.data);
-        const key = await PBKDF2("password", "salt");
-        const iv = crypto.getRandomValues(new Uint8Array(12));
-        const encryptedString = await encryptString(string, key, iv);
-        localStorage.setItem(SaveManager.dataKey, encryptedString);
-        localStorage.setItem(SaveManager.ivKey, arrayBufferToBase64(iv));
-        console.log(`SaveManager saved all data to localStorage`);
-    }
-
-    /** 
-     * Implement custom asynchronous load function here
-     * @returns {Promise<object>}
-     */
-    static async _load() {
-        const key = await PBKDF2("password", "salt");
-        const iv = localStorage.getItem(SaveManager.ivKey);
-        let encryptedString = localStorage.getItem(SaveManager.dataKey);
-        const decryptedString = await decryptString(encryptedString, key, base64ToArrayBuffer(iv));
-        const data = JSON.parse(decryptedString);
-        console.log(`SaveManager loaded all data from localStorage`);
-        return data;
-    }
-
-    /** 
-     * Initiate an immediate save if none is in progress
-     * @returns {Promise<null>}
-     */
-    static async saveNow() {
-        if (this.savingNow) return;
-        this.savingNow = true;
-        try {
-            await this._save();
-            tools.dispatch('saved');
-        }
-        finally {
-            this.savingNow = false;
-        }
-    }
-
-    /** 
-     * Schedule a save after a delay unless one is queued or in progress
-     */
-    static saveSoon() {
-        if (this.savingSoon || this.savingNow) return;
-        this.savingSoon = true;
-        setTimeout(() => {
-            this.savingSoon = false;
-            this.saveNow();
-        }, this.delay);
-    }
-
-}
-
-function arrayBufferToBase64(buffer) {
-    var binaryString = '';
-    var bytes = new Uint8Array(buffer);
-    var len = bytes.byteLength;
-    for (var i = 0; i < len; i++) {
-        binaryString += String.fromCharCode(bytes[i]);
-    }
-    return window.btoa(binaryString);
-}
-
-function base64ToArrayBuffer(base64) {
-    var binaryString = window.atob(base64);
-    var bytes = new Uint8Array(binaryString.length);
-    for (var i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes.buffer;
 }
 
 // ! ========================================================
@@ -281,7 +192,7 @@ class Core {
         // > Highlight note when notch left clicked
         notch.addEventListener('click', (event) => {
             Core.highlightNote(note);
-            SaveManager.saveSoon();
+            SaveManager.saveSoon(Core.data);
         });
 
         // > Enable text editing when notch double clicked
@@ -296,7 +207,7 @@ class Core {
             if (notch.contentEditable) {
                 notch.contentEditable = false;
                 note.data.name = notch.innerText;
-                SaveManager.saveSoon();
+                SaveManager.saveSoon(Core.data);
             }
         });
 
@@ -304,7 +215,7 @@ class Core {
         notch.addEventListener('mousedown', (event) => {
             if (event.button === 1) {
                 Core.closeNote(note);
-                SaveManager.saveSoon();
+                SaveManager.saveSoon(Core.data);
             }
         });
 
@@ -312,13 +223,13 @@ class Core {
         notch.addEventListener('contextmenu', (event) => {
             event.preventDefault();
             Core.deleteNote(note);
-            SaveManager.saveSoon();
+            SaveManager.saveSoon(Core.data);
         });
 
         // > Save note text when textarea focus lost
         textarea.addEventListener('blur', (event) => {
             note.data.text = textarea.value;
-            SaveManager.saveSoon();
+            SaveManager.saveSoon(Core.data);
         })
 
     }
@@ -348,17 +259,6 @@ const showRotateHide = (sprite) => {
     });
 }
 
-async function test() {
-    let password = prompt("Password: ");
-    let salt = prompt("Salt: ");
-    let text = prompt("Text: ");
-    let iv = crypto.getRandomValues(new Uint8Array(12));
-    let key = await PBKDF2(password, salt);
-    let encryptedString = await encryptString(text, key, iv);
-    let decryptedString = await decryptString(encryptedString, key, iv);
-    alert(`Decrypted: ${decryptedString}`);
-}
-
 // < ========================================================
 // < Entry Point
 // < ========================================================
@@ -377,6 +277,10 @@ async function main() {
     Switcher.init('page');
     Switcher.toggleBorder(true);
     Switcher.toggleFooter(false);
+
+    // > Initialise the save manager
+    await SaveManager.init();
+    // SaveManager.saveNow(Core.data);
 
     // > Optionally reset the Core
     // Core.reset();
@@ -423,7 +327,7 @@ async function main() {
     element.classList.add('notch');
     Switcher.top.appendChild(element);
     element.addEventListener('click', () => {
-        SaveManager.saveSoon();
+        SaveManager.saveSoon(Core.data);
     })
 
     // > Add the now button
@@ -432,7 +336,7 @@ async function main() {
     element.classList.add('notch');
     Switcher.top.appendChild(element);
     element.addEventListener('click', () => {
-        SaveManager.saveNow();
+        SaveManager.saveNow(Core.data);
     })
 
     // > Add the load button
@@ -440,8 +344,8 @@ async function main() {
     element.innerText = 'Load';
     element.classList.add('notch');
     Switcher.top.appendChild(element);
-    element.addEventListener('click', () => {
-        SaveManager._load();
+    element.addEventListener('click', async () => {
+        Core.data = await SaveManager._load();
     })
 
     // > Add the autosave sprite
