@@ -190,28 +190,34 @@ async function main(params) {
 
     // >
     const data = {
-        'notes': ['note']
+        'notes': ['note'],
     }
     const separator = ','
+    const storageKey = 'TEST';
     console.log(JSON.stringify(data, null, 2));
 
     // >
     let password = prompt("Password: ");
     let salt = prompt("Salt: ");
     let cryptoKey = await PBKDF2(password, salt);
-
-    // >
     const dataString = JSON.stringify(data);
     const ivArrayBuffer = crypto.getRandomValues(new Uint8Array(12));
     const encryptedBase64 = await encryptString(dataString, cryptoKey, ivArrayBuffer);
     const ivBase64 = arrayBufferToBase64(ivArrayBuffer);
     const storageBase64 = encryptedBase64 + separator + ivBase64;
+    localStorage.setItem(storageKey, storageBase64);
 
     // >
-    const [_encryptedBase64, _ivBase64] = storageBase64.split(separator);
+    let _password = prompt("_Password: ");
+    let _salt = prompt("_Salt: ");
+    let _cryptoKey = await PBKDF2(_password, _salt);
+    const _storageBase64 = localStorage.getItem(storageKey);
+    const [_encryptedBase64, _ivBase64] = _storageBase64.split(separator);
     const _ivArrayBuffer = base64ToArrayBuffer(_ivBase64);
-    const _dataString = await decryptString(_encryptedBase64, cryptoKey, _ivArrayBuffer);
+    const _dataString = await decryptString(_encryptedBase64, _cryptoKey, _ivArrayBuffer);
     const _data = JSON.parse(_dataString);
+
+    // >
     console.log(JSON.stringify(_data, null, 2));
 
 }

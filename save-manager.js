@@ -122,12 +122,12 @@ export class SaveManager {
      * Schedule a save after a delay unless one is queued or in progress
      * @returns {void}
      */
-    static saveSoon() {
+    static saveSoon(data) {
         if (this.savingSoon || this.savingNow) return;
         this.savingSoon = true;
         setTimeout(() => {
             this.savingSoon = false;
-            this.saveNow();
+            this.saveNow(data);
         }, this.delay);
     }
 
