@@ -7,6 +7,7 @@ import { Sprite } from "./sprite.js";
 import { PBKDF2, encryptString, decryptString } from "./encryptor.js";
 import { Switcher, Tab } from "./switcher.js"
 import { SaveManager } from "./save-manager.js"
+import { FixedTable } from "./fixed-table.js"
 
 // < ========================================================
 // < Note Class
@@ -103,8 +104,7 @@ class Core {
             opened: [],
             notes: {}
         }
-        let dataJSON = JSON.stringify(data);
-        localStorage.setItem(Core.dataKey, dataJSON);
+        SaveManager.saveNow(data);
         console.log(`Core reset all data in localStorage`);
     }
 
@@ -157,9 +157,6 @@ class Core {
     }
 
     static async init() {
-
-        // > Load data from localStorage
-        Core.data = await SaveManager._load();
 
         // > Generate notes from data
         let noteUUIDS = [...Core.data.opened];
@@ -236,7 +233,9 @@ class Core {
 
     /** Print Core.data object in a readable format */
     static print() {
-        console.log(JSON.stringify(Core.data, null, 2));
+        let message = JSON.stringify(Core.data, null, 2);
+        console.log(message);
+        alert(message);
     }
 
 }
@@ -250,13 +249,28 @@ class Core {
  * @param {Sprite} sprite
  */
 const showRotateHide = (sprite) => {
-    sprite.swap('load');
-    sprite.rotate(3).then(() => {
-        sprite.swap('done');
+    sprite.swap('progress_activity');
+    sprite.rotate(2, 1000).then(() => {
+        sprite.swap('check_circle');
         setTimeout(() => {
             sprite.swap('save');
-        }, 2000);
+        }, 1000);
     });
+}
+
+/** 
+ * 
+ * @param {string} name
+ * @param {HTMLElement} container
+ * @param {Function} onclick
+ * @returns {Sprite}
+ */
+function addSprite(name, container, onclick) {
+    const sprite = new Sprite(name, name);
+    sprite.element.title = name;
+    container.appendChild(sprite.element);
+    sprite.element.addEventListener('click', (event) => onclick(event));
+    return sprite;
 }
 
 // < ========================================================
@@ -269,97 +283,126 @@ const showRotateHide = (sprite) => {
  */
 async function main() {
 
-    // > Add devtools access to components
-    window.Core = Core;
-    window.Switcher = Switcher;
-
     // > Initialise the Switcher
     Switcher.init('page');
     Switcher.toggleBorder(true);
     Switcher.toggleFooter(false);
 
+    // > Add Sprites
+    let x = addSprite('top_panel_open', Switcher.top, () => Switcher.toggleHeader());
+    Switcher.top.prepend(x.element)
+    addSprite('add', Switcher.top, () => Core.blankNote());
+    addSprite('delete_history', Switcher.header, () => Core.reset());
+    addSprite('download', Switcher.header, () => Core.print());
+
+    addSprite('fullscreen', Switcher.header, () => console.log('yee'));
+    addSprite('no_encryption', Switcher.header, () => console.log('yee'));
+    addSprite('lock', Switcher.header, () => console.log('yee'));
+    addSprite('encrypted', Switcher.header, () => console.log('yee'));
+    addSprite('table', Switcher.header, () => console.log('yee'));
+    addSprite('file_upload', Switcher.header, () => console.log('yee'));
+    
+    // > Add the autosave sprite
+    var sprite = addSprite('save', Switcher.header, () => SaveManager.saveNow(Core.data));
+    // POSTIT - DOES NOT SAVE CURRENT NOTE, ONLY BLUR CAN ACCESS NOTE.innerText
+    tools.respond('saved', () => {
+        showRotateHide(sprite);
+        // > Reacts to saved but saved can be sent often with savenow, perhaps animation cancel?
+    });
+
     // > Initialise the save manager
     await SaveManager.init();
-    // SaveManager.saveNow(Core.data);
 
-    // > Optionally reset the Core
-    // Core.reset();
+    // > Load data from localStorage
+    Core.data = await SaveManager._load();
 
     // > Initialise the Core
     await Core.init();
 
-    // ! ========================================================
-    // ! Experimental
-    // ! ========================================================
-
-    // > Add the menu button
-    var element = document.createElement('div');
-    element.innerText = '=';
-    element.classList.add('notch');
-    element.title = 'show menu'
-    Switcher.top.insertBefore(element, Switcher.top.firstChild);
-    element.addEventListener('click', () => {
-        Switcher.toggleHeader();
-        // Core.print();
+    document.addEventListener('keydown', (event) => {
+        if (event.ctrlKey && event.key === 's') {
+            event.preventDefault();
+            SaveManager.saveNow(Core.data);
+            // POSTIT - DOES NOT SAVE CURRENT NOTE, ONLY BLUR CAN ACCESS NOTE.innerText
+        }
     })
 
-    // > Add the new tab button
-    var element = document.createElement('div');
-    element.innerText = '+';
-    element.classList.add('notch');
-    Switcher.top.appendChild(element);
-    element.addEventListener('click', () => {
-        Core.blankNote();
-    })
-
-    // > Add the reset button
-    var element = document.createElement('div');
-    element.innerText = 'R';
-    element.classList.add('notch');
-    Switcher.top.appendChild(element);
-    element.addEventListener('click', () => {
-        Core.reset();
-    })
-
-    // > Add the soon button
-    var element = document.createElement('div');
-    element.innerText = 'Soon';
-    element.classList.add('notch');
-    Switcher.top.appendChild(element);
-    element.addEventListener('click', () => {
-        SaveManager.saveSoon(Core.data);
-    })
-
-    // > Add the now button
-    var element = document.createElement('div');
-    element.innerText = 'Now';
-    element.classList.add('notch');
-    Switcher.top.appendChild(element);
-    element.addEventListener('click', () => {
-        SaveManager.saveNow(Core.data);
-    })
-
-    // > Add the load button
-    var element = document.createElement('div');
-    element.innerText = 'Load';
-    element.classList.add('notch');
-    Switcher.top.appendChild(element);
-    element.addEventListener('click', async () => {
-        Core.data = await SaveManager._load();
-    })
-
-    // > Add the autosave sprite
-    let sprite = new Sprite("test", "save");
-    sprite.element.addEventListener('click', () => {
-        SaveManager.saveNow();
-    })
-    Switcher.top.appendChild(sprite.element);
-    Core.sprite = sprite;
-
-    // > Spin the autosave icon when save occurs
-    tools.respond('saved', () => {
-        showRotateHide(Core.sprite);
+    // > Add FixedTable
+    let headers = ['UUID', 'Name', 'Text', 'Actions'];
+    let table = new FixedTable(headers);
+    let tabUUID = 'filesystem';
+    let tab = new Tab(tabUUID, table.element);
+    tab.notch.innerText = 'Files';
+    tab.notch.addEventListener('click', (event) => {
+        Switcher.highlightTab(tab);
+        Core.data.highlighted = null;
     });
+    Switcher.addTab(tab);
+    Switcher.highlightTab(tab);
+
+    for (let [uuid, data] of Object.entries(Core.data.notes)) {
+
+        /** @type {HTMLDivElement[]} */
+        let elements = [];
+
+        let uuidElement = document.createElement('div');
+        uuidElement.innerText = uuid;
+        elements.push(uuidElement);
+
+        let nameElement = document.createElement('div');
+        nameElement.innerText = data.name;
+        elements.push(nameElement);
+
+        let textElement = document.createElement('div');
+        textElement.innerText = data.text;
+        elements.push(textElement);
+    
+        let actionElement = document.createElement('div');
+        let styling = {
+            display: 'flex',
+            padding: '8px',
+            justifyContent: 'space-evenly'
+        }
+        if (!Core.data.opened.includes(uuid)) {
+            uuidElement.style.color = 'rgb(200, 48,48)';
+        }
+        tools.style(actionElement, styling);
+        addSprite('edit_note', actionElement, () => {
+            if (!Core.data.opened.includes(uuid)) {
+                let noteData = Core.data.notes[uuid];
+                tools.assert(noteData !== undefined);
+                Core.createNote(uuid, noteData);
+            }
+            else {
+                console.log('This note is already open')
+            }
+        });
+        addSprite('download', actionElement, () => {
+            let data = Core.data.notes[uuid];
+            data['uuid'] = uuid;
+            tools.downloadObject(data, 4);
+
+        });
+        addSprite('content_copy', actionElement, () => {
+            navigator.clipboard.writeText(Core.data.notes[uuid].text).catch(console.error);
+            tools.flash(actionElement);
+        });
+        addSprite('delete', actionElement, () => {
+            let confirmation = confirm('Are you sure?');
+            if (confirmation) {
+                console.log('yee')
+            }
+        });
+        elements.push(actionElement);
+
+        table.addRowFromElements(elements);
+
+    }
+
+    // table.toggleColumnCollapsed(0);
+    // table.setColumnWidth(0, '30%');
+    // table.setColumnWidth(1, '15%');
+    // table.setColumnWidth(2, '5%');
 
 }
 

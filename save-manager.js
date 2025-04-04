@@ -25,11 +25,13 @@ export class SaveManager {
     static initialised = false;
     static savingNow = false;
     static savingSoon = false;
-    static delay = 3000;
+    static delay = 4000;
 
     static async init() {
-        let password = prompt("Password: ");
-        let salt = prompt("Salt: ");
+        // let password = prompt("Password: ");
+        // let salt = prompt("Salt: ");        
+        let password = 'a';
+        let salt = 'a';
         this.cryptoKey = await PBKDF2(password, salt);
         this.initialised = true;
     }
@@ -47,34 +49,24 @@ export class SaveManager {
         const storageBase64 = encryptedBase64 + this.separator + ivBase64;
         localStorage.setItem(SaveManager.storageKey, storageBase64);
         console.log(`SaveManager saved all data to localStorage`);
+        tools.dispatch('saved');
     }
 
     /** 
      * Implement custom asynchronous load function here
      * @returns {Promise<object>}
      */
-    static async _load2() {
-        const storageBase64 = localStorage.getItem(SaveManager.storageKey);
-        const [encryptedBase64, ivBase64] = storageBase64.split(this.separator);
-        const ivArrayBuffer = base64ToArrayBuffer(ivBase64);
-        console.log(encryptedBase64, ivBase64);
-        console.log(this.cryptoKey);
-        const dataString = await decryptString(encryptedBase64, this.cryptoKey, ivArrayBuffer);
-        console.log(dataString);
-        const data = JSON.parse(dataString);
-        console.log(`SaveManager loaded all data from localStorage`);
-        return data;
-    }
-
     static async _load() {
         try {
 
+            // > 
             const storageBase64 = localStorage.getItem(SaveManager.storageKey);
             if (!storageBase64) {
                 console.error(`No data found in localStorage for ${this.storageKey}`);
                 return;
             }
 
+            // > 
             const [encryptedBase64, ivBase64] = storageBase64.split(this.separator);
             if (!encryptedBase64 || !ivBase64) {
                 console.error(`Invalid data format in localStorage for ${this.storageKey}`);
@@ -83,21 +75,18 @@ export class SaveManager {
 
             // > Convert Base64 IV to ArrayBuffer
             const ivArrayBuffer = base64ToArrayBuffer(ivBase64);
-            // console.error(encryptedBase64, ivBase64);
-            // console.log(this.cryptoKey);
 
-            // > Decrypt the data and parse it
+            // > Decrypt the data
             const dataString = await decryptString(encryptedBase64, this.cryptoKey, ivArrayBuffer);
-            // console.log(dataString);
 
+            // > Parse the string data and return
             const data = JSON.parse(dataString);
             console.log("SaveManager loaded all data from localStorage");
-
             return data;
 
         } catch (error) {
             console.error("Failed to load data:", error);
-            return null; // or handle error as needed
+            return;
         }
     }
 
@@ -107,11 +96,11 @@ export class SaveManager {
      * @returns {Promise<void>}
      */
     static async saveNow(data) {
-        if (this.savingNow) return;
+        if (this.savingNow || this.savingSoon) return;
         this.savingNow = true;
         try {
+            console.warn(JSON.stringify(data.notes, null, 2));
             await this._save(data);
-            tools.dispatch('saved');
         }
         finally {
             this.savingNow = false;

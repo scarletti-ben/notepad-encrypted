@@ -10,9 +10,9 @@
  */
 export async function PBKDF2(password, salt) {
 
-    // > Convert password and salt to bytes
-    const passwordBytes = new TextEncoder().encode(password);
-    const saltBytes = new TextEncoder().encode(salt);
+    // > Convert password and salt to int array
+    const passwordIntArray = new TextEncoder().encode(password);
+    const saltIntArray = new TextEncoder().encode(salt);
 
     // > Define importKey arguments
     var format = "raw";
@@ -20,10 +20,10 @@ export async function PBKDF2(password, salt) {
     var extractable = false;
     var keyUsages = ["deriveKey"]
 
-    // > Import key material using PBKDF2 to create a CryptoKey object
+    // > Import key material to create a CryptoKey object
     const keyMaterial = await crypto.subtle.importKey(
         format,
-        passwordBytes,
+        passwordIntArray,
         algorithm,
         extractable,
         keyUsages
@@ -32,7 +32,7 @@ export async function PBKDF2(password, salt) {
     // > Define deriveKey arguments
     var algorithm = {
         name: "PBKDF2",
-        salt: saltBytes,
+        salt: saltIntArray,
         iterations: 100000,
         hash: "SHA-256"
     };
@@ -41,7 +41,7 @@ export async function PBKDF2(password, salt) {
     var keyUsages = ["encrypt", "decrypt"];
 
     // > Derive the key using the given arguments
-    const derivedKey = await crypto.subtle.deriveKey(
+    const cryptoKey = await crypto.subtle.deriveKey(
         algorithm,
         keyMaterial,
         derivedKeyType,
@@ -49,7 +49,7 @@ export async function PBKDF2(password, salt) {
         keyUsages
     );
 
-    return derivedKey;
+    return cryptoKey;
 
 }
 
@@ -58,7 +58,7 @@ export async function PBKDF2(password, salt) {
 // < ========================================================
 
 /**
- * Encrypt string using AES-GCM, returning a Base64-encoded string
+ * Encrypt string using AES, returning a Base64-encoded string
  * @param {string} text - The string to encrypt
  * @param {CryptoKey} key - The CryptoKey object used for encryption
  * @param {Uint8Array} iv - The initialisation vector to use for encryption
@@ -72,15 +72,15 @@ export async function encryptString(text, key, iv) {
     // > Define encrypt arguments
     var algorithm = { name: "AES-GCM", iv: iv };
 
-    // > Encrypt bytes using the given arguments
-    const encryptedBytes = await crypto.subtle.encrypt(
+    // > Encrypt to arrayBuffer using the given arguments
+    const encryptedArrayBuffer = await crypto.subtle.encrypt(
         algorithm,
         key,
         textBytes
     );
 
-    // > Convert the encrypted bytes to a Base64 string and return
-    const encryptedString = btoa(String.fromCharCode(...new Uint8Array(encryptedBytes)));
+    // > Convert the encrypted arrayBuffer to a Base64 string and return
+    const encryptedString = arrayBufferToBase64(encryptedArrayBuffer);
     return encryptedString;
 
 }
@@ -90,7 +90,7 @@ export async function encryptString(text, key, iv) {
 // < ========================================================
 
 /**
- * Decrypt a Base64-encoded encrypted string using AES-GCM
+ * Decrypt a Base64-encoded encrypted string using AES
  * @param {string} encryptedString - Base64-encoded encrypted string to decrypt
  * @param {CryptoKey} key - The CryptoKey object used for decryption
  * @param {Uint8Array} iv - The initialisation vector used during encryption
@@ -98,54 +98,47 @@ export async function encryptString(text, key, iv) {
  */
 export async function decryptString(encryptedString, key, iv) {
 
-    // console.warn("in decryptor")
-
-    // console.log(encryptedString, key, iv);
-
     // > Convert the Base64 encrypted string to bytes
-    const binaryString = atob(encryptedString);
+    var binaryString = atob(encryptedString);
     const encryptedBytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
         encryptedBytes[i] = binaryString.charCodeAt(i);
     }
-    
-    // console.warn(encryptedBytes);
 
     // > Define decrypt arguments
     var algorithm = { name: "AES-GCM", iv: iv };
 
-    // > Decrypt bytes using the given arguments
-    const decryptedBytes = await crypto.subtle.decrypt(
+    // > Decrypt to array buffer using the given arguments
+    const decryptedArrayBuffer = await crypto.subtle.decrypt(
         algorithm,
         key,
         encryptedBytes
     );
 
-    // console.log(decryptedBytes);
-
-    // > Convert the decrypted bytes back to a string and return
-    const decodedText = new TextDecoder().decode(decryptedBytes);
-    return decodedText;
+    // > Convert the decrypted array buffer back to a string and return
+    const decryptedString = new TextDecoder().decode(decryptedArrayBuffer);
+    return decryptedString;
 
 }
 
 // < ========================================================
-// < Utility Functions
+// < Exported Utility Functions
 // < ========================================================
 
 /**
  * Converts an ArrayBuffer to a Base64-encoded string
- * @param {ArrayBuffer} buffer - The ArrayBuffer
+ * @param {ArrayBuffer} arrayBuffer - The ArrayBuffer
  * @returns {string} - The Base64-encoded string
  */
-export function arrayBufferToBase64(buffer) {
+export function arrayBufferToBase64(arrayBuffer) {
     var binaryString = '';
-    var intArray = new Uint8Array(buffer);
-    var len = intArray.byteLength;
+    const intArray = new Uint8Array(arrayBuffer);
+    const len = intArray.byteLength;
     for (var i = 0; i < len; i++) {
         binaryString += String.fromCharCode(intArray[i]);
     }
-    return window.btoa(binaryString);
+    const base64String = window.btoa(binaryString)
+    return base64String;
 }
 
 /**
@@ -154,17 +147,17 @@ export function arrayBufferToBase64(buffer) {
  * @returns {string} - The Base64-encoded string
  */
 export function intArrayToBase64(intArray) {
-    var buffer = intArray.buffer
-    return arrayBufferToBase64(buffer);
+    var arrayBuffer = intArray.buffer
+    return arrayBufferToBase64(arrayBuffer);
 }
 
 /**
  * Converts a Base64-encoded string to a Uint8Array
- * @param {string} base64 - The Base64-encoded string
- * @returns {ArrayBuffer} - The decoded Uint8Arrays
+ * @param {string} base64String - The Base64-encoded string
+ * @returns {Uint8Array} - The decoded Uint8Arrays
  */
-export function base64ToIntArray(base64) {
-    var binaryString = window.atob(base64);
+export function base64ToIntArray(base64String) {
+    var binaryString = window.atob(base64String);
     var intArray = new Uint8Array(binaryString.length);
     for (var i = 0; i < binaryString.length; i++) {
         intArray[i] = binaryString.charCodeAt(i);
@@ -174,14 +167,11 @@ export function base64ToIntArray(base64) {
 
 /**
  * Converts a Base64-encoded string to an ArrayBuffer
- * @param {string} base64 - The Base64-encoded string
+ * @param {string} base64String - The Base64-encoded string
  * @returns {ArrayBuffer} - The decoded ArrayBuffer
  */
-export function base64ToArrayBuffer(base64) {
-    let intArray = base64ToIntArray(base64);
-    return intArray.buffer;
+export function base64ToArrayBuffer(base64String) {
+    let intArray = base64ToIntArray(base64String);
+    const arrayBuffer = intArray.buffer;
+    return arrayBuffer;
 }
-
-// ! ========================================================
-// ! Derive Key from Saved Token
-// ! ========================================================

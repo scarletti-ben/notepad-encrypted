@@ -1,5 +1,5 @@
 /* < ====================================================== !
-< Styling for TabSwitcher
+< Styling for Switcher
 < ====================================================== ! */
 
 .switcher {
@@ -67,6 +67,7 @@
   white-space: nowrap;
   border-radius: var(--curviness) var(--curviness) 0px 0px;
   background-color: var(--notch-color);
+  font-size: 12px;
   user-select: none;
   cursor: pointer;
   background-color: var(--notch-color);

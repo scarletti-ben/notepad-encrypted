@@ -1,0 +1,83 @@
+/* ! ====================================================== !
+! FixedTable Styling
+! ====================================================== ! */
+
+.fixed-table {
+  height: 100%;
+  width: 100%;
+  margin: 0px;
+  padding: 0px;
+  overflow: auto;
+  box-sizing: border-box;
+  position: relative;
+  background-color: rgb(46, 61, 44);
+
+  --thin: 400;
+  --thick: 600;
+  --text-align: center;
+  --cell-padding: 8px;
+  --cell-color: transparent;
+  --head-color: #6aa994;
+  --alternate-color: blue;
+  --hover-color: #3b4b53;
+  --shadowing: inset 0 0 0 1px rgb(108, 67, 67);
+
+}
+
+.fixed-table .highlighted {
+  background-color: var(--alternate-color) !important;
+}
+
+.fixed-table .hidden {
+  display: none !important;
+}
+
+.fixed-table .collapsed {
+  visibility: collapse !important;
+}
+
+.fixed-table table {
+  width: 100%;
+  height: auto;
+  border-collapse: collapse;
+  border-spacing: 2px;
+  table-layout: fixed;
+  box-sizing: border-box;
+}
+
+.fixed-table thead {
+  background-color: var(--head-color);
+}
+
+.fixed-table th,
+.fixed-table td {
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
+  padding: var(--cell-padding);
+  background-color: var(--cell-color);
+  text-align: var(--text-align);
+  color: var(--foreground-colour);
+  box-shadow: var(--shadowing);
+}
+
+/* .fixed-table th > div,
+.fixed-table td > div {
+  box-sizing: border-box;
+  text-align: inherit;
+} */
+
+.fixed-table th {
+  cursor: pointer;
+  user-select: none;
+  font-weight: var(--thick);
+}
+
+.fixed-table td {
+  font-weight: var(--thin);
+}
+
+.fixed-table tbody tr:hover {
+  background-color: var(--hover-color);
+}

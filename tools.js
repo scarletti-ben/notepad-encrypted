@@ -38,7 +38,7 @@ export const tools = {
      * @throws {Error} If any argument passed is undefined
      */
     argcheck(...args) {
-        let successful = args.every(arg => arg !== undefined);
+        const successful = args.every(arg => arg !== undefined);
         if (!successful) {
             throw new Error('UserError: A passed argument was undefined');
         }
@@ -63,8 +63,8 @@ export const tools = {
      * @returns {Array<number>} An array containing the sequence [0, 1, 2, ..., n-1]
      */
     range(n) {
-        let array = Array(n);
-        let indices = array.keys();
+        const array = Array(n);
+        const indices = array.keys();
         return [...indices];
     },
 
@@ -142,6 +142,47 @@ export const tools = {
     // ==========================================================
     // Other Tools
     // ==========================================================
+
+    /**
+     * Download a given object as a JSON file
+     * @param {Object} object - The object to download
+     * @param {number} indent - The number of spaces of indentation [2]
+     * @param {string} filename - The name of the file to download [data.json]
+     */
+    downloadObject(object, indent = 2, filename = 'data.json') {
+        const blob = new Blob([JSON.stringify(object, null, indent)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        setTimeout(() => {
+            URL.revokeObjectURL(url); 
+        }, 200);
+    },
+    
+    /**
+     * Applies CSS styles to an element from key: value pairs
+     * @param {HTMLElement} element - The target element
+     * @param {Object<string, string>} styling - The styles to apply
+     */
+    style(element, styling) {
+        Object.assign(element.style, styling);
+    },
+
+    /**
+     * Briefly flash an element by toggling its opacity
+     * - Will be hard to notice on elements with low opacity to start
+     * @param {HTMLElement} element - The element to flash
+     * @param {number} [duration=300] - Total duration of the flash in ms
+     */
+    flash(element, duration = 400) {
+        let original = element.style.opacity;
+        element.style.transition = `opacity ${duration / 2}ms`;
+        element.style.opacity = '0';
+        setTimeout(() => {
+            element.style.opacity = original;
+        }, duration / 2);
+    },
 
     /** 
      * Dispatch a custom user event with a given flavour
@@ -346,7 +387,7 @@ export const tools = {
 // ! ========================================================
 
 /**
- * A collection of experimental utility functions
+ * Experimental collection of utility functions
  * - Untested
  * - Limited documentation
  * - Limited use cases
@@ -382,6 +423,36 @@ export const experimental = {
 
     title(str) {
         return str.replace(/\w\S*/g, text => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase());
+    }
+
+}
+
+// ! ========================================================
+// ! Exported wrappers Object
+// ! ========================================================
+
+/**
+ * Experimental collection of function wrappers / decorators
+ * - Untested
+ * - Limited documentation
+ * @namespace wrappers
+ */
+export const wrappers = {
+
+    async bottleneck(afunc) {
+        /** @type {Promise} */
+        let promise;
+        let running = false;
+        return async function wrapper(...args) {
+            if (!running) {
+                running = true;
+                promise = Promise.resolve(afunc(...args));
+                promise.finally(() => {
+                    running = false;
+                });
+            }
+            return promise;
+        }
     }
 
 }

@@ -10,6 +10,9 @@ import { tools } from "./tools.js";
 
 export class Sprite {
 
+    /** @type {HTMLElement} */
+    element;
+
     constructor(elementID, spriteName) {
         this.element = document.createElement("div");
         this.element.id = elementID;
