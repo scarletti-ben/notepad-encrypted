@@ -3,12 +3,15 @@
 // < ========================================================
 
 /**
- * Creates FixedTable instances as wrappers for HTML tables
- * - Uses styling from `fixed-table.css`
- * - Table uses `table-layout: fixed` and should not overflow
- * - It is possible to alter column widths via `table.setColumnWidth`
+ * Construct wrapper instance for HTML `table` element
+ * - FixedTable uses `table-layout: fixed` and should not overflow
+ * - Alter column widths via `table.setColumnWidth`
+ * - Uses `.fixed-table` styling from `fixed-table.css`
  */
 export class FixedTable {
+
+    /** @type {string} */
+    className = 'fixed-table';
 
     /** @type {string[]} */
     headers;
@@ -41,11 +44,11 @@ export class FixedTable {
     rows;
 
     /** 
-     * Create FixedTable instance as a wrapper for HTML table
-     * - For the table instance, `table.element` is a plain div with class `fixed-table`
-     * - Add `table.element` to a container via `container.appendChild(table.element)`
+     * Create FixedTable instance as a wrapper for HTML table element
+     * - For the table instance, `table.element` is a div with class `fixed-table`
+     * - The `table.element` is not automatically added to the DOM
      * - The table uses `table-layout: fixed` and should not overflow
-     * - It is possible to alter column widths via `table.setColumnWidth`
+     * - Alter column widths via `table.setColumnWidth`
      * @param {string[]} headers - String list of headers for the table
      */
     constructor(headers) {
@@ -60,6 +63,10 @@ export class FixedTable {
         this.init();
     }
 
+    /** 
+     * Initialise the elements of the FixedTable instance
+     * - Add elements to table with correct structuring
+     */
     init() {
         this.head.appendChild(this.headRow);
         this.table.appendChild(this.head);
@@ -79,7 +86,7 @@ export class FixedTable {
             this.colgroup.append(column);
 
         });
-        this.element.className = 'fixed-table';
+        this.element.className = this.className;
         this.columns = this.colgroup.querySelectorAll('col');
     }
 
@@ -90,10 +97,6 @@ export class FixedTable {
     get rows() {
         return Array.from(this.table.rows);
     }
-
-    // < ========================================================
-    // < 
-    // < ========================================================
 
     /**
      * Add a row element to the table body

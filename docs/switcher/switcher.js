@@ -8,6 +8,11 @@ import { tools } from "../tools.js";
 // < Exported Tab Class
 // < ========================================================
 
+/**
+ * Construct wrapper for linked HTML elements for use with `Switcher`
+ * - Uses `.notch` and `.pane` styling from `switcher.css`
+ * @see Switcher
+ */
 export class Tab {
 
     /** @type {string} */
@@ -24,6 +29,7 @@ export class Tab {
 
     /** 
      * Initialise a Tab instance for use with Switcher
+     * - A wrapper for linked HTML elements for use with `Switcher`
      * @param {string} uuid - The unique identifier for this tab
      * @param {HTMLDivElement} element - The element to go in the pane
      */
@@ -63,10 +69,23 @@ export class Tab {
 // < Exported Switcher Class
 // < ========================================================
 
+/**
+ * Class as wrapper for linked HTML elements for use with `Tab`
+ * - Elements from instances of `Tab` populate `Switcher` elements
+ * - Initialise via `Switcher.init()`
+ * - Uses multiple styling rules from `switcher.css`
+ * @see Tab
+ */
 export class Switcher {
 
     /** @type {Tab[]} */
     static tabs = [];
+
+    /** @type {string} */
+    static id = 'switcher';
+
+    /** @type {string} */
+    static className = 'switcher';
 
     /** @type {HTMLDivElement} */
     static element;
@@ -93,16 +112,16 @@ export class Switcher {
     static footer;
 
     /**
-     * Generate Switcher HTML structure inside a given container element
-     * and assign HTML elements to attributes of Switcher
-     * @param {string} containerID - The ID of the container element
+     * Generate `Switcher` HTML structure inside an existing container element
+     * and assign HTML elements to attributes of `Switcher`
+     * @param {string} containerID - The ID of the existing container element
      * @param {boolean} [header=true] - Whether header is visible
      * @param {boolean} [footer=true] - Whether footer is visible
      * @param {boolean} [border=true] - Whether border is visible
      */
     static init(containerID, header = true, footer = true, border = true) {
-        let switcherID = this.inject(containerID);
-        this.element = document.getElementById(switcherID);
+        const id = this.inject(containerID);
+        this.element = document.getElementById(id);
         this.top = this.element.querySelector('.top-section');
         this.ribbon = this.element.querySelector('.ribbon');
         this.bottom = this.element.querySelector('.bottom-section');
@@ -116,7 +135,7 @@ export class Switcher {
     }
 
     /** 
-     * Get a tab instance from a given tabUUID
+     * Get tab instance from a given uuid
      * @param {string} tabUUID - The uuid of the tab instance
      * @returns {Tab | undefined} The tab instance
      */
@@ -125,7 +144,7 @@ export class Switcher {
     }
 
     /** 
-     * Highlight a specific tab notch, hide all other tab panes
+     * Highlight a specific tab notch, show tab pane, hide all other tab panes
      * @param {Tab} tab - The tab instance to highlight
      */
     static highlightTab(tab) {
@@ -136,7 +155,7 @@ export class Switcher {
     }
 
     /** 
-     * Close a specific tab
+     * Close a specific tab, the tab's notch and pane remain in the DOM
      * @param {Tab} tab - The tab instance to close
      */
     static closeTab(tab) {
@@ -147,12 +166,13 @@ export class Switcher {
     }
 
     /** 
-     * Remove a specific tab notch and pane from the DOM
+     * Remove a specific tab's notch and pane from the DOM
      * @param {Tab} tab - The tab instance to remove
-     * @returns {boolean} Whether or not user confirmed action
+     * @param {boolean} force - Option to force and avoid confirmation
+     * @returns {boolean} Confirmation value
      */
-    static removeTab(tab) {
-        const confirmation = confirm('Are you sure?')
+    static removeTab(tab, force = false) {
+        const confirmation = force || confirm('Are you sure?');
         if (confirmation) {
             tab.pane.remove();
             tab.notch.remove();
@@ -174,7 +194,7 @@ export class Switcher {
 
     /** 
      * Toggle or set visibility of Switcher header
-     * @param {boolean | undefined} shown - Toggles when undefined
+     * @param {boolean} [shown] - Toggles when undefined
      */
     static toggleHeader(shown) {
         tools.toggleShown(this.header, shown);
@@ -182,30 +202,29 @@ export class Switcher {
 
     /** 
      * Toggle or set visibility of Switcher footer
-     * @param {boolean | undefined} shown - Toggles when undefined
+     * @param {boolean} [shown] - Toggles when undefined
      */
     static toggleFooter(shown) {
         tools.toggleShown(this.footer, shown);
     }
 
     /** 
-     * Toggle or set the border of Switcher viewport
-     * @param {boolean | undefined} bordered - Toggles when undefined
+     * Toggle or set the border of `Switcher` viewport
+     * @param {boolean} [bordered] - Toggles when undefined
      */
     static toggleBorder(bordered) {
         tools.toggleBordered(this.viewport, bordered);
     }
 
     /**
-     * Generate Switcher HTML structure inside a given container element
-     * @param {string} containerID - The ID of the container element
-     * @returns {string} The id of the new Switcher element
+     * Generate `Switcher` HTML structure inside a existing container element
+     * @param {string} containerID - The ID of the existing container element
+     * @returns {string} The id of the new `Switcher` element
      */
     static inject(containerID) {
-        let switcherID = 'switcher'
         let container = document.getElementById(containerID);
         const switcherHTML = `
-        <div id="${switcherID}" class="switcher">
+        <div id="${this.id}" class="${this.className}">
             <div class="top-section">
                 <div class="ribbon"></div>
             </div>
@@ -218,8 +237,8 @@ export class Switcher {
             </div>
         </div>`;
         container.insertAdjacentHTML('beforeend', switcherHTML);
-        console.log(`Switcher created HTML element with ID: ${switcherID}`)
-        return switcherID;
+        console.log(`Switcher created ${this.className} element with ID: ${this.id}`);
+        return this.id;
     }
 
 }

@@ -5,8 +5,8 @@
 import { tools } from "./tools.js";
 import { Sprite } from "./sprite/sprite.js";
 import { Switcher, Tab } from "./switcher/switcher.js"
-import { FixedTable } from "./fixed-table/fixed-table.js"
 import { Note } from "./note/note.js"
+import { FixedTable } from "./fixed-table/fixed-table.js"
 
 // < ========================================================
 // < Core Class
@@ -137,7 +137,7 @@ class Core {
     // < II: Notes Methods
     // < ========================================================
 
-    static generateNotes() {
+    static initNotes() {
 
         // > Generate notes from data
         let noteUUIDS = [...Core.data.opened];
@@ -201,18 +201,24 @@ class Core {
     }
 
     /** 
-     * 
-     * @param {Note} note
-     * @returns {boolean} Whether or not user confirmed action
+     * Remove a specific note tab's notch and tab pane from the DOM
+     * @param {Note} note - The note instance to remove
+     * @param {boolean} force - Option to force and avoid confirmation
+     * @returns {boolean} Confirmation value
      */
-    static deleteNote(note) {
-        const confirmation = confirm('Are you sure?')
+    static removeNote(note, force = false) {
+        const confirmation = force || confirm('Are you sure?');
         if (confirmation) {
-            Core.closeNote(note);
+            if (Core.data.highlighted === note.uuid) {
+                Core.data.highlighted = null;
+            }
+            Switcher.removeTab(note.tab, true);
+            tools.remove(Note.instances, note);
+            tools.remove(Core.data.opened, note.uuid);
             delete Core.data.notes[note.uuid];
             console.log(`Core deleted note: ${note.uuid}`);
         }
-        return confirmation;
+        return confirmation
     }
 
     /** 
@@ -257,8 +263,8 @@ class Core {
         // > Delete note when notch right clicked
         notch.addEventListener('contextmenu', (event) => {
             event.preventDefault();
-            const deleted = Core.deleteNote(note);
-            if (deleted) {
+            const removed = Core.removeNote(note);
+            if (removed) {
                 Core.saveSoon(Core.data);
             }
         });
@@ -275,6 +281,78 @@ class Core {
     // < III: Sprite Methods
     // < ========================================================
 
+    /** 
+     * 
+     * @param {string} name
+     * @param {HTMLElement} container
+     * @param {(event: Event)} onclick
+     * @returns {Sprite}
+     */
+    static addSprite(name, container, onclick) {
+        const sprite = new Sprite(name, name);
+        sprite.element.title = name;
+        container.appendChild(sprite.element);
+        sprite.element.addEventListener('click', (event) => onclick(event));
+        return sprite;
+    }
+
+    static initSprites() {
+
+        let first = Core.addSprite('top_panel_open', Switcher.top, () => {
+            Switcher.toggleHeader()
+        })
+        Switcher.top.prepend(first.element);
+
+        Core.addSprite('add', Switcher.top, () => {
+            Core.createBlankNote()
+        });
+        Core.addSprite('delete_history', Switcher.header, () => {
+            Core.reset()
+        });
+        Core.addSprite('download', Switcher.header, () => {
+            Core.print()
+        });
+        Core.addSprite('fullscreen', Switcher.header, () => {
+            console.log('yee')
+        });
+        Core.addSprite('no_encryption', Switcher.header, () => {
+            console.log('yee')
+        });
+        Core.addSprite('lock', Switcher.header, () => {
+            console.log('yee')
+        });
+        Core.addSprite('encrypted', Switcher.header, () => {
+            console.log('yee')
+        });
+        Core.addSprite('table', Switcher.header, () => {
+            let uuid = 'file-table';
+            let tab = Switcher.getTab(uuid);
+            if (!tab) {
+                tab = addTableTab(uuid);
+                tab.notch.addEventListener('mousedown', (event) => {
+                    if (event.button === 1) {
+                        Switcher.removeTab(tab, true);
+                    }
+                });
+            }
+            else {
+                Switcher.removeTab(tab, true);
+            }
+        });
+        Core.addSprite('file_upload', Switcher.header, () => {
+            console.log('yee')
+        });
+
+        Core.addSprite('save', Switcher.header, () => {
+            Core.encryptedSave(Core.data, Core.cryptoKey);
+        }).also((sprite) => {
+            tools.respond('saved', () => {
+                showRotateHide(sprite);
+            })
+        })
+
+    }
+
     // < ========================================================
     // < VI: Miscellaneous
     // < ========================================================
@@ -284,6 +362,39 @@ class Core {
         let message = JSON.stringify(this.data, null, 4);
         console.log(message);
         // alert(message);
+    }
+
+    static initWindowTools() {
+
+        // > Add quick reset functionality to window
+        window.quickReset = () => {
+            tools.save('2r5Ra3rS+c/6O+YnXmCSoodHWlpfmlukrmb3eIK29pO3Rj1q6iLB99Fqz646BNvnAfT7Shfq+7iZcwVeOYR4aLDr5EXZ6g0ySBH5vSSlLbDe62JT5bVNaLao6iQuTEGFd4lIPLwa14nRbTFEQvbTNsTyGCvrbxPD9gbRwRKRmzFAWSH/YHLovc2EC53qiHMmGh8MuDJAKJxsgXey81Nchly/6JMpqUGWzS64+BRsUkG8kaM6pEV1XNsbolgop3XUP/DR6CSDJoDgoQBn598ViYveiuMZDXJwJGeqkOxL6JYiZ7QCQ2Z9xNay+fug3kCPveCgnVVwnwo0swtvRONIX0LF5yFX0CnbPXFxvQ==,tMV0b0YHjU0u+Iyy', '2025-04-04-notepad');
+            console.warn('Reset, waiting to reload');
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        }
+        console.warn('Added window.quickReset');
+
+        // > Add tools object to window
+        window.tools = tools;
+        console.warn('Added window.tools');
+
+    }
+
+    static initListeners() {
+
+        // > Listeners for keyboard keys
+        document.addEventListener('keydown', (event) => {
+
+            // > CTRL + S: Save notes
+            if (event.ctrlKey && event.key === 's') {
+                event.preventDefault();
+                Core.saveNow();
+            }
+
+        })
+
     }
 
 }
@@ -304,91 +415,6 @@ const showRotateHide = (sprite) => {
             sprite.swap('save');
         }, 1000);
     });
-}
-
-/** 
- * 
- * @param {string} name
- * @param {HTMLElement} container
- * @param {(event: Event)} onclick
- * @returns {Sprite}
- */
-function addSprite(name, container, onclick) {
-    const sprite = new Sprite(name, name);
-    sprite.element.title = name;
-    container.appendChild(sprite.element);
-    sprite.element.addEventListener('click', (event) => onclick(event));
-    return sprite;
-}
-
-function addListeners() {
-
-    // > Listeners for keyboard keys
-    document.addEventListener('keydown', (event) => {
-
-        // > CTRL + S: Save notes
-        if (event.ctrlKey && event.key === 's') {
-            event.preventDefault();
-            Core.saveNow();
-        }
-
-    })
-
-}
-
-function addSprites() {
-
-    addSprite('top_panel_open', Switcher.top, () => {
-        Switcher.toggleHeader()
-    });
-    addSprite('add', Switcher.top, () => {
-        Core.createBlankNote()
-    });
-    addSprite('delete_history', Switcher.header, () => {
-        Core.reset()
-    });
-    addSprite('download', Switcher.header, () => {
-        Core.print()
-    });
-    addSprite('fullscreen', Switcher.header, () => {
-        console.log('yee')
-    });
-    addSprite('no_encryption', Switcher.header, () => {
-        console.log('yee')
-    });
-    addSprite('lock', Switcher.header, () => {
-        console.log('yee')
-    });
-    addSprite('encrypted', Switcher.header, () => {
-        console.log('yee')
-    });
-    addSprite('table', Switcher.header, () => {
-        let uuid = 'file-table';
-        let tab = Switcher.getTab(uuid);
-        if (!tab) {
-            tab = addTableTab(uuid);
-            tab.notch.addEventListener('mousedown', (event) => {
-                if (event.button === 1) {
-                    Switcher.removeTab(tab);
-                }
-            });
-        }
-        else {
-            Switcher.removeTab(tab);
-        }
-    });
-    addSprite('file_upload', Switcher.header, () => {
-        console.log('yee')
-    });
-
-    addSprite('save', Switcher.header, () => {
-        Core.encryptedSave(Core.data, Core.cryptoKey);
-    }).also((sprite) => {
-        tools.respond('saved', () => {
-            showRotateHide(sprite);
-        })
-    })
-
 }
 
 function addTableTab(tabUUID) {
@@ -431,7 +457,7 @@ function addTableTab(tabUUID) {
             uuidElement.style.color = 'rgb(200, 48,48)';
         }
         tools.style(actionElement, styling);
-        addSprite('edit_note', actionElement, () => {
+        Core.addSprite('edit_note', actionElement, () => {
             if (!Core.data.opened.includes(uuid)) {
                 let noteData = Core.data.notes[uuid];
                 tools.assert(noteData !== undefined);
@@ -441,17 +467,17 @@ function addTableTab(tabUUID) {
                 console.log('This note is already open')
             }
         });
-        addSprite('download', actionElement, () => {
+        Core.addSprite('download', actionElement, () => {
             let data = Core.data.notes[uuid];
             data['uuid'] = uuid;
             tools.downloadObject(data, 4);
 
         });
-        addSprite('content_copy', actionElement, () => {
+        Core.addSprite('content_copy', actionElement, () => {
             navigator.clipboard.writeText(Core.data.notes[uuid].text).catch(console.error);
             tools.flash(actionElement);
         });
-        addSprite('delete', actionElement, () => {
+        Core.addSprite('delete', actionElement, () => {
             let confirmation = confirm('Are you sure?');
             if (confirmation) {
                 console.log('yee')
@@ -472,65 +498,38 @@ function addTableTab(tabUUID) {
 
 }
 
-function quickReset() {
-    tools.save('C+HpI+GiNgQjJB2H2WPI4onmxYIxqyhyaf39HUaph5F6tTBlMkSYmHMRWZ5nOPwSHs+wmpg2Y7ya6fBRATo70TIv8XIIrAwc+mJbBPFUXYPcnwa2V1uLEEIPXbFTHS8WUEMDx/BerIR0LdujI9auIH5tzxWKuAFqlMbaJ321NCvGr2wRFbx1aHe17kwJPw//H/Yb49dZVOry5gllDMCV5PVxeFgmWSbdQp6JejaUcDWilKzHiunPSF3nLIzczH7UokETJjDzU+pa5vQdFdPzj9I4LpJlg9qQMIwsuJMlWoy0LeyQgS1zq6r1OXSaZ13UY0SxylXBho1OCS5lygV8uq9+ZCqntxMhD2pC+LKuB9sB,m8q9+XHDGBiTU4vP', '2025-04-04-notepad');
-    console.warn('Reset, waiting to reload');
-    setTimeout(() => {
-        window.location.reload();
-    }, 500);
-}
-window.quickReset = quickReset;
-console.warn('Added window.quickReset')
-
 // < ========================================================
 // < Entry Point
 // < ========================================================
 
 /**
- * Entry point of the application
+ * Entry point for the application
  * - Initialises necessary components
  */
 async function main() {
 
-    // < ========================================================
-    // < Initialise the Switcher
-    // < ========================================================
-
-    Switcher.init('page', true, false, true);
-
-    // < ========================================================
-    // < Initialise the Core
-    // < ========================================================
-
     try {
-        // POSTIT - Aim is to ask for user input on load
-        let cryptoKey = await tools.PBKDF2('password', 'salt');
-        await Core.init(cryptoKey);
-        Core.generateNotes();
+
+        Switcher.init('page', true, false, true);
+
+        // let password = prompt('Password: ')
+        // let salt = prompt('Salt: ')
+        let password = 'password'
+        let salt = 'salt'
+        let key = await tools.PBKDF2(password, salt);
+        await Core.init(key);
+
+        Core.initWindowTools();
+        Core.initNotes();
+        Core.initSprites();
+        Core.initListeners();
+
     } catch (error) {
-        console.error(error)
+
+        console.warn(error);
         return;
+
     }
-
-    // < ========================================================
-    // < Initialise the Listeners
-    // < ========================================================
-
-    addListeners();
-
-    // < ========================================================
-    // < Add Sprites
-    // < ========================================================
-
-    addSprites();
-
-    // < ========================================================
-    // < Notes
-    // < ========================================================
-
-    // - DOES NOT SAVE CURRENT NOTE, ONLY BLUR CAN ACCESS NOTE.innerText
-    //      - Applies to all Core.saveNow calls
-    // - Animation reacts to saved but sent often via savenow, perhaps animation cancel?
 
 }
 

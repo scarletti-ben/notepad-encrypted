@@ -2,21 +2,28 @@
 // < Imports
 // < ========================================================
 
-import { Switcher, Tab } from "../switcher/switcher.js"
+import { Tab } from "../switcher/switcher.js"
 
 // < ========================================================
 // < Exported Note Class
 // < ========================================================
 
+/**
+ * Construct wrapper instance for a `Tab` with a textarea
+ * - Uses `.note` styling from `note.css`
+ */
 export class Note {
 
     /** @type {Note[]} */
     static instances = [];
 
     /** @type {string} */
+    className = 'note';
+
+    /** @type {string} */
     uuid;
 
-    /** @type {Object<string, { name: string, text: string }>} */
+    /** @type {{ name: string, text: string }>} */
     data;
 
     /** @type {HTMLTextAreaElement} */
@@ -26,9 +33,9 @@ export class Note {
     tab;
 
     /** 
-     * Initialise a Note instance, generating an associated Switcher tab
-     * @param {string} uuid - The unique identifier for the Note instance
-     * @param {Object<string, { name: string, text: string }>} data - The data object for the Note instance
+     * Construct note instance as a wrapper for a `Tab` with a `textarea`
+     * @param {string} uuid - The unique identifier for the note instance
+     * @param {{ name: string, text: string }} data - The data for this instance
      */
     constructor(uuid, data) {
         this.uuid = uuid;
@@ -38,9 +45,9 @@ export class Note {
     }
 
     /**
-     * Create a textarea element using the given data
-     * @param {Object<string, { name: string, text: string }>} data - The data object
-     * @returns {HTMLTextAreaElement} The created textarea element
+     * Create a `textarea` element using the given data
+     * @param {{ name: string, text: string }} data - The data object
+     * @returns {HTMLTextAreaElement} The created `textarea` element
      */
     _createTextarea(data) {
         const textarea = document.createElement('textarea');
@@ -49,13 +56,13 @@ export class Note {
     }
 
     /**
-     * Create container for the given textarea and generate Tab instance
-     * @param {HTMLDivElement} textarea - The textarea element
-     * @returns {Tab} The created div element
+     * Create container for the `textarea` and generate `Tab` instance
+     * @param {HTMLDivElement} textarea - The `textarea` element
+     * @returns {Tab} The created `Tab` instance
      */
     _createTab(textarea) {
         const element = document.createElement('div');
-        element.classList.add('note');
+        element.classList.add(this.className);
         element.appendChild(textarea);
         let tab = new Tab(this.uuid, element);
         tab.notch.innerText = this.data.name;
@@ -63,9 +70,9 @@ export class Note {
     }
 
     /**
-     * Get a Note instance from Note.instances using a given uuid
-     * @param {string} noteUUID - The uuid of the note
-     * @returns {Note} The Note instance
+     * Get a note instance from `Note.instances` using a given uuid
+     * @param {string} noteUUID - The unique identifier for the note instance
+     * @returns {Note} The note instance
      */
     static getNote(noteUUID) {
         return Note.instances.find(note => note.uuid === noteUUID);

@@ -8,12 +8,32 @@ import { tools } from "../tools.js";
 // < Exported Sprite Class
 // < ========================================================
 
+/**
+ * Construct wrapper instance for an HTML `svg` element
+ * - Uses symbols from `sprite.svg` for the sprite image
+ * - Swap image using a different symbol name via sprite.swap(name)
+ * - Uses `.sprite` styling from `sprite.css`
+ */
 export class Sprite {
 
     /** @type {HTMLElement} */
     element;
 
-    constructor(elementID, spriteName) {
+    /** @type {SVGElement} */
+    svg;
+
+    /** @type {SVGUseElement} */
+    use;
+
+    /**
+     * Construct wrapper instance for an HTML `svg` element
+     * - Uses `.sprite` styling from `sprite.css`
+     * - Uses symbols from `sprite.svg` for the sprite image
+     * - Swap image using a different symbol name via sprite.swap(name)
+     * @param {string} elementID - The id to be given to the new element
+     * @param {string} symbolName - The name of the symbol from `sprite.svg`
+     */
+    constructor(elementID, symbolName) {
         this.element = document.createElement("div");
         this.element.id = elementID;
         this.element.className = "sprite";
@@ -21,16 +41,43 @@ export class Sprite {
         this.use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
         this.svg.appendChild(this.use);
         this.element.appendChild(this.svg);
-        this.swap(spriteName);
+        this.swap(symbolName);
     }
 
-    swap(spriteName) {
-        this.spriteName = spriteName;
+    /**
+     * Swap image using a given symbol name
+     * - Uses "cache busting" techniques
+     * @param {string} symbolName - The name of the symbol from `sprite.svg`
+     */
+    swap(symbolName) {
         let cacheBust = new Date().getTime();
-        let value = `sprite/sprite.svg?${cacheBust}#${this.spriteName}`;
+        let value = `sprite/sprite.svg?${cacheBust}#${symbolName}`;
         this.use.setAttribute('href', value);
         tools.reflow(this.element);
     }
+
+    /**
+     * Toggle .hidden class for sprite element
+     * @param {boolean} [force] - Force hidden on or off
+     */
+    toggleHidden(force) {
+        tools.toggleHidden(this.element, force);
+    }
+
+    /** 
+     * Manipulate the sprite instance, immediately calling the given action
+     * - Useful in situations in which a function returns a sprite instance
+     * @param {(sprite: Sprite)} action - Action immediately applied to this sprite instance
+     * @returns {Sprite} This sprite instance, for method chaining
+     */
+    also(action) {
+        action(this);
+        return this;
+    }
+
+    // ! ========================================================
+    // ! Experimental Methods
+    // ! ========================================================
 
     /** 
      * Rotate this sprite's element n times, each for a given duration
@@ -43,25 +90,6 @@ export class Sprite {
      */
     rotate(n = 1, duration = 1000) {
         return _rotate(this.element, n, duration);
-    }
-
-    show() {
-        tools.toggleHidden(this.element, false);
-    }
-
-    hide() {
-        tools.toggleHidden(this.element, true);
-    }
-
-    /** 
-     * Manipulate the sprite instance, immediately calls the given action
-     * - Useful in situations in which a function returns a sprite instance
-     * @param {(sprite: Sprite)} action - Action immediately applied to this sprite instance
-     * @returns {Sprite} This sprite instance, for method chaining
-     */
-    also(action) {
-        action(this);
-        return this;
     }
 
 }

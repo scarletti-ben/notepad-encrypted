@@ -398,17 +398,15 @@ export const tools = {
      * Toggle .hidden class for an element
      * @param {HTMLElement} element - The element
      * @param {boolean} [force] - Force hidden on or off
-     * @returns {null}
      */
-    toggleHidden(element, hidden) {
-        element.classList.toggle('hidden', hidden);
+    toggleHidden(element, force) {
+        element.classList.toggle('hidden', force);
     },
 
     /** 
      * Toggle shown (removal of .hidden class) for an element
      * @param {HTMLElement} element - The element
      * @param {boolean} [force] - Force shown on or off
-     * @returns {null}
      */
     toggleShown(element, shown) {
         let force = shown === undefined ? undefined : !shown
@@ -419,7 +417,6 @@ export const tools = {
      * Toggle the .highlighted class for an element
      * @param {HTMLElement} element - The element
      * @param {boolean} [force] - Force highlighted on or off
-     * @returns {null}
      */
     toggleHighlighted(element, force) {
         element.classList.toggle('highlighted', force);
@@ -429,7 +426,6 @@ export const tools = {
      * Toggle the .bordered class for an element
      * @param {HTMLElement} element - The element
      * @param {boolean} [force] - Force bordered on or off
-     * @returns {null}
      */
     toggleBordered(element, force) {
         element.classList.toggle('bordered', force);
