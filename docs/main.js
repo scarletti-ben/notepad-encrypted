@@ -8,14 +8,13 @@ import { Switcher, Tab } from "./switcher/switcher.js"
 import { Note } from "./note/note.js"
 import { FixedTable } from "./fixed-table/fixed-table.js"
 
-// < ========================================================
-// < Core Class
-// < ========================================================
+// ~ ========================================================
+// ~ Core Class (Work in Progress)
+// ~ ========================================================
 
 /**
- * Core class to interface between other project components
- * - Namespace attached to window as window.Core
- * - Interfaces between Switcher, Tab, and Note
+ * Core class to interface between other application modules
+ * - Interfaces between Switcher, Tab, Note and more
  * - Manages encryption of data
  * - Manages data synchronisation via localStorage
  */
@@ -298,32 +297,22 @@ class Core {
 
     static initSprites() {
 
+        // < ========================================================
+        // < Implemented Sprites
+        // < ========================================================
+
+        Core.addSprite('add', Switcher.top, () => {
+            Core.createBlankNote();
+        });
+        Core.addSprite('delete_history', Switcher.header, () => {
+            Core.reset();
+        });
+
         let first = Core.addSprite('top_panel_open', Switcher.top, () => {
-            Switcher.toggleHeader()
+            Switcher.toggleHeader();
         })
         Switcher.top.prepend(first.element);
 
-        Core.addSprite('add', Switcher.top, () => {
-            Core.createBlankNote()
-        });
-        Core.addSprite('delete_history', Switcher.header, () => {
-            Core.reset()
-        });
-        Core.addSprite('download', Switcher.header, () => {
-            Core.print()
-        });
-        Core.addSprite('fullscreen', Switcher.header, () => {
-            console.log('yee')
-        });
-        Core.addSprite('no_encryption', Switcher.header, () => {
-            console.log('yee')
-        });
-        Core.addSprite('lock', Switcher.header, () => {
-            console.log('yee')
-        });
-        Core.addSprite('encrypted', Switcher.header, () => {
-            console.log('yee')
-        });
         Core.addSprite('table', Switcher.header, () => {
             let uuid = 'file-table';
             let tab = Switcher.getTab(uuid);
@@ -339,9 +328,6 @@ class Core {
                 Switcher.removeTab(tab, true);
             }
         });
-        Core.addSprite('file_upload', Switcher.header, () => {
-            console.log('yee')
-        });
 
         Core.addSprite('save', Switcher.header, () => {
             Core.encryptedSave(Core.data, Core.cryptoKey);
@@ -350,6 +336,29 @@ class Core {
                 showRotateHide(sprite);
             })
         })
+
+        // < ========================================================
+        // < Sprites without Implementation
+        // < ========================================================
+
+        Core.addSprite('download', Switcher.header, () => {
+            alert('Not implemented');
+        });
+        Core.addSprite('fullscreen', Switcher.header, () => {
+            alert('Not implemented');
+        });
+        Core.addSprite('no_encryption', Switcher.header, () => {
+            alert('Not implemented');
+        });
+        Core.addSprite('lock', Switcher.header, () => {
+            alert('Not implemented');
+        });
+        Core.addSprite('encrypted', Switcher.header, () => {
+            alert('Not implemented');
+        });
+        Core.addSprite('file_upload', Switcher.header, () => {
+            alert('Not implemented');
+        });
 
     }
 
@@ -399,9 +408,9 @@ class Core {
 
 }
 
-// < ========================================================
-// < Utility Functions
-// < ========================================================
+// ! ========================================================
+// ! Experimental Utility Functions
+// ! ========================================================
 
 /** 
  * 
@@ -504,7 +513,7 @@ function addTableTab(tabUUID) {
 
 /**
  * Entry point for the application
- * - Initialises necessary components
+ * - Initialises application components
  */
 async function main() {
 
