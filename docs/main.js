@@ -48,8 +48,8 @@ class Core {
             notes: {}
         }
         Core.data = data;
-        await this.encryptedSave(data, cryptoKey)
-        // Core.saveNow(data);
+        await this.encryptedSave(data, cryptoKey);
+        // Core.saveNow();
         console.log(`Core reset all data in localStorage`);
     }
 
@@ -118,14 +118,12 @@ class Core {
 
     }
 
-    static saveNow() {
-        console.log('saving not implemented');
-        // this.encryptedSave(this.data, this.cryptoKey);
+    static async saveNow() {
+        await this.encryptedSave(Core.data, Core.cryptoKey);
     }
 
-    static saveSoon() {
-        console.log('saving not implemented');
-        // this.encryptedSave(this.data, this.cryptoKey);
+    static async saveSoon() {
+        await Core.saveNow();
     }
 
     static sync() {
@@ -232,7 +230,7 @@ class Core {
         // > Highlight note when notch left clicked
         notch.addEventListener('click', (event) => {
             Core.highlightNote(note);
-            Core.saveSoon(Core.data);
+            Core.saveSoon();
         });
 
         // > Enable text editing when notch double clicked
@@ -247,7 +245,7 @@ class Core {
             if (notch.contentEditable) {
                 notch.contentEditable = false;
                 note.data.name = notch.innerText;
-                Core.saveSoon(Core.data);
+                Core.saveSoon();
             }
         });
 
@@ -255,7 +253,7 @@ class Core {
         notch.addEventListener('mousedown', (event) => {
             if (event.button === 1) {
                 Core.closeNote(note);
-                Core.saveSoon(Core.data);
+                Core.saveSoon();
             }
         });
 
@@ -264,14 +262,14 @@ class Core {
             event.preventDefault();
             const removed = Core.removeNote(note);
             if (removed) {
-                Core.saveSoon(Core.data);
+                Core.saveSoon();
             }
         });
 
         // > Save note text when textarea focus lost
         textarea.addEventListener('blur', (event) => {
             note.data.text = textarea.value;
-            Core.saveSoon(Core.data);
+            Core.saveSoon();
         })
 
     }
@@ -302,7 +300,12 @@ class Core {
         // < ========================================================
 
         Core.addSprite('add', Switcher.top, () => {
-            Core.createBlankNote();
+            let note = Core.createBlankNote();
+            note.tab.notch.innerText = 'Note';
+            Core.highlightNote(note);
+            note.tab.notch.contentEditable = true;
+            note.tab.notch.focus();
+            tools.selectAll(note.tab.notch);
         });
         Core.addSprite('delete_history', Switcher.header, () => {
             Core.reset(Core.cryptoKey);
@@ -336,15 +339,22 @@ class Core {
                 showRotateHide(sprite);
             })
         })
+        Core.addSprite('fullscreen', Switcher.header, () => {
+            function toggleFullscreen() {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                } else {
+                    document.documentElement.requestFullscreen();
+                }
+            }
+            toggleFullscreen();
+        });
 
         // < ========================================================
         // < Sprites without Implementation
         // < ========================================================
 
         Core.addSprite('download', Switcher.header, () => {
-            alert('Not implemented');
-        });
-        Core.addSprite('fullscreen', Switcher.header, () => {
             alert('Not implemented');
         });
         Core.addSprite('no_encryption', Switcher.header, () => {
@@ -539,6 +549,9 @@ async function main() {
         return;
 
     }
+
+    // POSTIT - Need to debounce / bottleneck saving again
+    // Move saving wheel to Switcher.top
 
 }
 

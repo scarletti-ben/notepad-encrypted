@@ -2,16 +2,6 @@
 < Sprite Styling
 < ====================================================== ! */
 
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .sprite {
   width: 32px;
   height: 32px;
@@ -27,4 +17,14 @@
   width: 16px;
   height: 16px;
   fill: var(--foreground-colour);
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
