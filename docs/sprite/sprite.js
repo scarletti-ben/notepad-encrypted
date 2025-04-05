@@ -2,7 +2,7 @@
 // < Imports
 // < ========================================================
 
-import { tools } from "./tools.js";
+import { tools } from "../tools.js";
 
 // < ========================================================
 // < Exported Sprite Class
@@ -27,7 +27,7 @@ export class Sprite {
     swap(spriteName) {
         this.spriteName = spriteName;
         let cacheBust = new Date().getTime();
-        let value = `sprite.svg?${cacheBust}#${this.spriteName}`;
+        let value = `sprite/sprite.svg?${cacheBust}#${this.spriteName}`;
         this.use.setAttribute('href', value);
         tools.reflow(this.element);
     }
@@ -51,6 +51,17 @@ export class Sprite {
 
     hide() {
         tools.toggleHidden(this.element, true);
+    }
+
+    /** 
+     * Manipulate the sprite instance, immediately calls the given action
+     * - Useful in situations in which a function returns a sprite instance
+     * @param {(sprite: Sprite)} action - Action immediately applied to this sprite instance
+     * @returns {Sprite} This sprite instance, for method chaining
+     */
+    also(action) {
+        action(this);
+        return this;
     }
 
 }

@@ -2,7 +2,7 @@
 // < Imports
 // < ========================================================
 
-import { tools } from "./tools.js";
+import { tools } from "../tools.js";
 
 // < ========================================================
 // < Exported Tab Class
@@ -96,8 +96,11 @@ export class Switcher {
      * Generate Switcher HTML structure inside a given container element
      * and assign HTML elements to attributes of Switcher
      * @param {string} containerID - The ID of the container element
+     * @param {boolean} [header=true] - Whether header is visible
+     * @param {boolean} [footer=true] - Whether footer is visible
+     * @param {boolean} [border=true] - Whether border is visible
      */
-    static init(containerID) {
+    static init(containerID, header = true, footer = true, border = true) {
         let switcherID = this.inject(containerID);
         this.element = document.getElementById(switcherID);
         this.top = this.element.querySelector('.top-section');
@@ -107,6 +110,9 @@ export class Switcher {
         this.header = this.element.querySelector('.header');
         this.frame = this.element.querySelector('.frame');
         this.footer = this.element.querySelector('.footer');
+        this.toggleHeader(header);
+        this.toggleFooter(footer);
+        this.toggleBorder(border);
     }
 
     /** 
@@ -138,6 +144,22 @@ export class Switcher {
         this.ribbon.removeChild(tab.notch);
         tools.remove(this.tabs, tab);
         console.log(`Switcher closed tab: ${tab.uuid}`);
+    }
+
+    /** 
+     * Remove a specific tab notch and pane from the DOM
+     * @param {Tab} tab - The tab instance to remove
+     * @returns {boolean} Whether or not user confirmed action
+     */
+    static removeTab(tab) {
+        const confirmation = confirm('Are you sure?')
+        if (confirmation) {
+            tab.pane.remove();
+            tab.notch.remove();
+            tools.remove(this.tabs, tab);
+            console.log(`Switcher deleted tab: ${tab.uuid}`);
+        }
+        return confirmation
     }
 
     /** 
@@ -177,7 +199,7 @@ export class Switcher {
     /**
      * Generate Switcher HTML structure inside a given container element
      * @param {string} containerID - The ID of the container element
-     * @returns {string} - The id of the new Switcher element
+     * @returns {string} The id of the new Switcher element
      */
     static inject(containerID) {
         let switcherID = 'switcher'

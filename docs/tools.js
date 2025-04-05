@@ -143,6 +143,58 @@ export const tools = {
     // Other Tools
     // ==========================================================
 
+    /** 
+     * Save string or object to localStorage using key
+     * @param {string} key - The localStorage key to save to
+     * @param {object | string} data - The data to be saved
+     */
+    save(data, key) {
+
+        // > Ensure no arguments are undefined
+        tools.argcheck(data, key);
+
+        // > Ensure string format, converting if necessary
+        let string = typeof data === 'string' ? data : JSON.stringify(data);
+
+        // > Save string to local storage using key
+        window.localStorage.setItem(key, string);
+
+    },
+
+    /** 
+     * Load string or object from localStorage using key
+     * @param {string} key - The localStorage key to load from
+     * @returns {object | string} The saved data from localStorage
+     */
+    load(key) {
+
+        // > Load string from local storage using key
+        const string = window.localStorage.getItem(key);
+
+        // > Return if no data is found
+        if (!string) {
+            console.error(`No data found in localStorage for ${key}`);
+            return;
+        }
+
+        // > Try to parse string to object, fallback to string if SyntaxError
+        let output;
+        try {
+            output = JSON.parse(string);
+        } catch (error) {
+            if (error instanceof SyntaxError) {
+                output = string;
+            }
+            else {
+                throw error;
+            }
+        }
+
+        // > Return the object or string output
+        return output;
+
+    },
+
     /**
      * Download a given object as a JSON file
      * @param {Object} object - The object to download
@@ -152,14 +204,15 @@ export const tools = {
     downloadObject(object, indent = 2, filename = 'data.json') {
         const blob = new Blob([JSON.stringify(object, null, indent)], { type: 'application/json' });
         const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob);
+        link.href = url;
         link.download = filename;
         link.click();
         setTimeout(() => {
-            URL.revokeObjectURL(url); 
+            URL.revokeObjectURL(url);
         }, 200);
     },
-    
+
     /**
      * Applies CSS styles to an element from key: value pairs
      * @param {HTMLElement} element - The target element
@@ -185,28 +238,34 @@ export const tools = {
     },
 
     /** 
-     * Dispatch a custom user event with a given flavour
-     * - This custom event can only be picked up by document
+     * Dispatch `CustomEvent` of type `UserEvent` with a given flavour
+     * - The `CustomEvent` can only be picked up by document
      * - The flavour of the event can be any string you want
      * - The detail object should use strings as key / value pairs
-     * @param {string} flavour - The flavour of event
-     * @param {object} [detail={}] - Additional event data
-     * @returns {string} - The dispatched event name
+     * - Listen for specific `UserEvent` by checking `event.detail.flavour`
+     * @see tools.respond - Counterpart that responds to `UserEvent`
+     * @param {string} flavour - The flavour of `UserEvent`
+     * @param {object} [detail={}] - Additional event data, minus flavour
      */
     dispatch(flavour, detail = {}) {
-        const eventName = `UserEvent:${flavour}`;
-        const event = new CustomEvent(eventName, { detail });
+        const eventType = `UserEvent`;
+        detail['flavour'] = flavour;
+        const event = new CustomEvent(eventType, { detail });
         document.dispatchEvent(event);
-        return eventName;
     },
 
     /** 
-     * Add listener to document for a custom user event with a given flavour
-     * @param {string} flavour - The flavour of event to respond to
-     * @param {Function} callback - The callback function
+     * Add listener to document for `UserEvent` of a given flavour
+     * @see tools.dispatch - Counterpart that generates `UserEvent`
+     * @param {string} flavour - The flavour of `UserEvent` to respond to
+     * @param {(event: Event)} callback - Callback with event as first argument
      */
     respond(flavour, callback) {
-        document.addEventListener(`UserEvent:${flavour}`, (event) => callback(event));
+        document.addEventListener(`UserEvent`, (event) => {
+            if (event.detail.flavour === flavour) {
+                callback(event);
+            }
+        });
     },
 
     /** 
@@ -377,7 +436,164 @@ export const tools = {
     },
 
     // > ========================================================
-    // > III: Miscellaneous
+    // > III: Encryption
+    // > ========================================================
+
+    /**
+     * Converts a Base64-encoded string to an ArrayBuffer
+     * @param {string} base64String - The Base64-encoded string
+     * @returns {ArrayBuffer} The ArrayBuffer
+     */
+    base64ToArrayBuffer(base64String) {
+        var binaryString = window.atob(base64String);
+        var intArray = new Uint8Array(binaryString.length);
+        for (var i = 0; i < binaryString.length; i++) {
+            intArray[i] = binaryString.charCodeAt(i);
+        }
+        const arrayBuffer = intArray.buffer;
+        return arrayBuffer;
+    },
+
+    /**
+     * Converts an ArrayBuffer to a Base64-encoded string
+     * @param {ArrayBuffer} arrayBuffer - The ArrayBuffer
+     * @returns {string} The Base64-encoded string
+     */
+    arrayBufferToBase64(arrayBuffer) {
+        var binaryString = '';
+        const intArray = new Uint8Array(arrayBuffer);
+        const len = intArray.byteLength;
+        for (var i = 0; i < len; i++) {
+            binaryString += String.fromCharCode(intArray[i]);
+        }
+        const base64String = window.btoa(binaryString)
+        return base64String;
+    },
+
+    /**
+     * Derive cryptographic key using PBKDF2 from a given password and salt
+     * @param {string} password - The password to derive the key from
+     * @param {string} salt - The salt to use for key derivation
+     * @returns {Promise<CryptoKey>} The derived CryptoKey object
+     */
+    async PBKDF2(password, salt) {
+
+        // > Convert password and salt to int array
+        const passwordIntArray = new TextEncoder().encode(password);
+        const saltIntArray = new TextEncoder().encode(salt);
+
+        // > Define importKey arguments
+        var format = "raw";
+        var algorithm = { name: "PBKDF2" };
+        var extractable = false;
+        var keyUsages = ["deriveKey"]
+
+        // > Import key material to create a CryptoKey object
+        const keyMaterial = await crypto.subtle.importKey(
+            format,
+            passwordIntArray,
+            algorithm,
+            extractable,
+            keyUsages
+        );
+
+        // > Define deriveKey arguments
+        var algorithm = {
+            name: "PBKDF2",
+            salt: saltIntArray,
+            iterations: 100000,
+            hash: "SHA-256"
+        };
+        var derivedKeyType = { name: "AES-GCM", length: 256 };
+        var extractable = false;
+        var keyUsages = ["encrypt", "decrypt"];
+
+        // > Derive the key using the given arguments
+        const cryptoKey = await crypto.subtle.deriveKey(
+            algorithm,
+            keyMaterial,
+            derivedKeyType,
+            extractable,
+            keyUsages
+        );
+
+        return cryptoKey;
+
+    },
+
+    /**
+     * Encrypt string using AES-GCM, returning a single cipher data string
+     * @param {string} string - The string to encrypt
+     * @param {CryptoKey} cryptoKey - The CryptoKey object used for encryption
+     * @returns {Promise<{string}>} The ciphertext and iv as a comma-separated Base64-encoded string
+     */
+    async encrypt(string, cryptoKey) {
+
+        // > Convert string to Uint8Array (byte array)
+        const stringByteArray = new TextEncoder().encode(string);
+
+        // > Generate random ArrayBuffer for the initialisation vector
+        const ivArrayBuffer = crypto.getRandomValues(new Uint8Array(12));
+
+        // > Define encrypt arguments
+        var algorithm = {
+            name: "AES-GCM",
+            iv: ivArrayBuffer
+        };
+
+        // > Encrypt to a ciphertext ArrayBuffer using the given arguments
+        const ciphertextArrayBuffer = await crypto.subtle.encrypt(
+            algorithm,
+            cryptoKey,
+            stringByteArray
+        );
+
+        // > Convert ciphertext and iv ArrayBuffers to Base64 strings
+        const ciphertext64 = tools.arrayBufferToBase64(ciphertextArrayBuffer);
+        const iv64 = tools.arrayBufferToBase64(ivArrayBuffer);
+
+        // > Create comma-separated string of ciphertext and iv and return
+        let cipherData = ciphertext64 + ',' + iv64
+        return cipherData;
+
+    },
+
+    /**
+     * Decrypt Base64 cipherData using AES-GCM, returning original string
+     * @param {string} cipherData - Base64-encoded ciphertext and iv as one comma-separated string
+     * @param {CryptoKey} cryptoKey - The CryptoKey object used for decryption
+     * @returns {Promise<string>} The decrypted string
+     */
+    async decrypt(cipherData, cryptoKey) {
+
+        // > Split the comma-separated string
+        const [ciphertext, iv] = cipherData.split(',');
+
+        // > Convert the Base64 ciphertext and iv back to ArrayBuffers
+        const ciphertextArrayBuffer = tools.base64ToArrayBuffer(ciphertext);
+        const ivArrayBuffer = tools.base64ToArrayBuffer(iv);
+
+        // > Define decrypt arguments
+        const algorithm = {
+            name: "AES-GCM",
+            iv: ivArrayBuffer
+        };
+
+        // > Decrypt to original string ArrayBuffer
+        const stringArrayBuffer = await crypto.subtle.decrypt(
+            algorithm,
+            cryptoKey,
+            ciphertextArrayBuffer
+        );
+
+        // > Convert string ArrayBuffer to string and return
+        const string = new TextDecoder().decode(stringArrayBuffer);
+        return string;
+
+    }
+
+    // > ========================================================
+    // > IV: Miscellaneous
     // > ========================================================
 
 }

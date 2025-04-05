@@ -1,5 +1,5 @@
 /* < ====================================================== !
-< Custom Styling Defaults
+< Main Styling
 < ====================================================== ! */
 
 :root {
@@ -38,37 +38,4 @@ body {
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-}
-
-/* < ====================================================== !
-< Note Styling
-< ====================================================== ! */
-
-.note {
-  height: 100%;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-color: rgb(34, 69, 40);
-}
-
-.note textarea {
-  height: 100%;
-  width: 100%;
-  box-sizing: border-box;
-  color: var(--foreground-colour);
-  background-color: transparent;
-  scrollbar-color: var(--scrollbar-colour);
-  border: none;
-  outline: none;
-  resize: none;
-}
-
-.note textarea:focus {
-  border: none;
-  outline: none;
 }
