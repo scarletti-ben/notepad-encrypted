@@ -305,7 +305,7 @@ class Core {
             Core.createBlankNote();
         });
         Core.addSprite('delete_history', Switcher.header, () => {
-            Core.reset();
+            Core.reset(Core.cryptoKey);
         });
 
         let first = Core.addSprite('top_panel_open', Switcher.top, () => {
