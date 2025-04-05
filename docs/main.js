@@ -472,6 +472,16 @@ function addTableTab(tabUUID) {
 
 }
 
+function quickReset() {
+    tools.save('C+HpI+GiNgQjJB2H2WPI4onmxYIxqyhyaf39HUaph5F6tTBlMkSYmHMRWZ5nOPwSHs+wmpg2Y7ya6fBRATo70TIv8XIIrAwc+mJbBPFUXYPcnwa2V1uLEEIPXbFTHS8WUEMDx/BerIR0LdujI9auIH5tzxWKuAFqlMbaJ321NCvGr2wRFbx1aHe17kwJPw//H/Yb49dZVOry5gllDMCV5PVxeFgmWSbdQp6JejaUcDWilKzHiunPSF3nLIzczH7UokETJjDzU+pa5vQdFdPzj9I4LpJlg9qQMIwsuJMlWoy0LeyQgS1zq6r1OXSaZ13UY0SxylXBho1OCS5lygV8uq9+ZCqntxMhD2pC+LKuB9sB,m8q9+XHDGBiTU4vP', '2025-04-04-notepad');
+    console.warn('Reset, waiting to reload');
+    setTimeout(() => {
+        window.location.reload();
+    }, 500);
+}
+window.quickReset = quickReset;
+console.warn('Added window.quickReset')
+
 // < ========================================================
 // < Entry Point
 // < ========================================================
