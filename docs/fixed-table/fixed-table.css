@@ -1,6 +1,6 @@
-/* ! ====================================================== !
-! FixedTable Styling
-! ====================================================== ! */
+/* < ====================================================== <
+< FixedTable Styling
+< ====================================================== < */
 
 .fixed-table {
   height: 100%;
@@ -61,12 +61,6 @@
   color: var(--foreground-colour);
   box-shadow: var(--shadowing);
 }
-
-/* .fixed-table th > div,
-.fixed-table td > div {
-  box-sizing: border-box;
-  text-align: inherit;
-} */
 
 .fixed-table th {
   cursor: pointer;
