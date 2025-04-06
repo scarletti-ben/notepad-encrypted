@@ -1,18 +1,21 @@
-# notepad-encrypted
-This README is a work in progress
-- Vanilla JS / CSS / HTML
-- No reliance on external imports or libraries
-- More a learning tool than a readme
-- ECMA import export syntax
-- Modular set of unfinished, proof of concept modules 
+# Project Overview
+The aims and constraints I gave myself before starting this were to
+- Have no reliance on external libraries or imports
+- Build entirely with "vanilla" `Javascript` / `HTML` / `CSS`
+- Build a notepad application with note tabs that you can switch between
+- Allow useers to create notes, close notes, open old notes
+- Allow notes to persist across sessions
 
----
+The less important feature I wanted to add as a proof of concept was an encrpytion system in which the notes in `localStorage` were encrypted using a user password.
 
-# Directory Overview
+All of the above aims were met, and it has morphed into a modular `JavaScript` project with a few proof of concept modules that are rather rough around the edges. Both this README, and the project itself, are more learning tools for myself than anything else.
 
-### Directory Information
+### A Note On Compatability
+- Designed and tested in `Google Chrome Version 134.0.6998.178 (Official Build) (64-bit)`
+- As there is decent use of the `import` / `export` syntax introduced in `ECMAScript 6 (ES6)` / `ES2015` it is likely that compatability with older browsers is limited
+- Not tested on other browsers, mobile devices, or other desktop devices
 
----
+# Repository Overview
 
 ### FixedTable – JavaScript Wrapper for HTML Table
 - [`fixed-table.css`](./docs/fixed-table/fixed-table.css)
@@ -107,7 +110,7 @@ The `HTML` would utlisise the `<use>` tag in some way similar to the snippet bel
 </svg>
 ```
 
-An excert from the `Sprite` class shows how the `<symbol>` elements from `sprite.svg` are utilised, and also shows a "cache busting" technique to ensure new requests for `sprite.svg` are made every time it needs to be read from
+An excerpt from the `Sprite` class shows how the `<symbol>` elements from `sprite.svg` are utilised, and also shows a "cache busting" technique to ensure new requests for `sprite.svg` are made every time it needs to be read from
 ```javascript
 constructor(elementID, symbolName) {
     this.element = document.createElement("div");
@@ -311,20 +314,56 @@ Switcher.addTab(note.tab);
 note.textarea.value = 'new text';
 console.log(note.data);
 ```
-
-<!-- POSTIT -->
-<!--  NOTES SHOULD AUTO UPDATE textarea.value to note.data  -->
-
 ---
 
-<!-- POSTIT -->
-<!--  finish readme for docs files below  -->
-
-#### [`docs`](./docs)
+### The Rest of the Owl
 - [`index.html`](./docs/index.html/)
 - [`main.css`](./docs/main.css/)
 - [`main.js`](./docs/main.js/)
 - [`tools.js`](./docs/tools.js/)
+
+#### index.html
+With the way that the "modular" system is set up, `index.html` only needs to import a single `JavaScript` file, which serves as the entry point script of the `notepad-encrypted`. The script used for this is `main.js`.
+
+#### main.js
+The script imports and ties the functionality together from the other modules, which are all mostly "project agnostic". 
+
+Because `main.js` is loaded as a module via `<script type="module" src="main.js" defer></script>`, its variables and functions do pollute the `window` namespace. To further cement this however I decided on the overkill of additionally having a `Core` class with static methods for application-specific functionality.
+
+#### main.css
+The styling in `main.css` is not changed much from my other projects, it's mostly just the boilerplate code I use when setting up a test project. Most of the application-specific styling is left up to the individual modules / components. Whenever a new `.css` file is created it needs to be added into `index.html` manually.
+
+#### tools.js
+The script `tools.js` defines `tools` as a utility object that can be imported via `import { tools } from "./tools.js"`. The `tools` object defines many functions under a single namespace. It has been useful to smooth over some of the repetitive tasks that are needlessly verbose in `JavaScript`.
+
+In this project, one of the main uses of `tools.js` was for encryption, to encrypt / decrypt `Core.data` when saving / loading via `localStorage`
+
+An abridged version of the three useful functions from `tools` can be seen below, the general idea is that a `CryptoKey` is derived via `tools.PBKDF2` and used for both encryption and decryption
+```javascript
+/**
+ * Derive cryptographic key using PBKDF2 from a given password and salt
+ * @param {string} password - The password to derive the key from
+ * @param {string} salt - The salt to use for key derivation
+ * @returns {Promise<CryptoKey>} The derived CryptoKey object
+ */
+async PBKDF2(password, salt) {...}
+
+/**
+ * Decrypt Base64 cipherData using AES-GCM, returning original string
+ * @param {string} cipherData - Base64-encoded ciphertext and iv as one comma-separated string
+ * @param {CryptoKey} cryptoKey - The CryptoKey object used for decryption
+ * @returns {Promise<string>} The decrypted string
+ */
+async decrypt(cipherData, cryptoKey) {...}
+
+/**
+ * Encrypt string using AES-GCM, returning a single cipher data string
+ * @param {string} string - The string to encrypt
+ * @param {CryptoKey} cryptoKey - The CryptoKey object used for encryption
+ * @returns {Promise<{string}>} The ciphertext and iv as a comma-separated Base64-encoded string
+ */
+async encrypt(string, cryptoKey) {...}
+```
 
 ### Directory Diagram
 ```
@@ -348,9 +387,5 @@ docs/
 └── tools.js
 ```
 
-# Miscellaneous
-- Designed and tested in `Google Chrome Version 134.0.6998.178 (Official Build) (64-bit)`
-- Not tested on mobile devices, or other desktop devices
-
-# Learnings 
-- `<colgroup>`
+# Learnings
+- You can use a `<colgroup>` element with `<col>` element children to alter styling for an entire column of an `HTML` table
