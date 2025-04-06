@@ -208,12 +208,16 @@ class Core {
         console.log(`Core highlighted note: ${note.uuid}`);
     }
 
-    /** @param {Note} note */
+    /** 
+     * Remove a specific note tab's notch and tab pane from the DOM
+     * - Data for the note remains in Core.data.notes
+     * @param {Note} note - The note instance to close
+     */
     static closeNote(note) {
+        Switcher.closeTab(note.tab, true);
         if (Core.data.highlighted === note.uuid) {
             Core.data.highlighted = null;
         }
-        Switcher.closeTab(note.tab);
         tools.remove(Note.instances, note);
         tools.remove(Core.data.opened, note.uuid);
         console.log(`Core closed note: ${note.uuid}`);
@@ -221,17 +225,17 @@ class Core {
 
     /** 
      * Remove a specific note tab's notch and tab pane from the DOM
+     * - Data for the note is also removed from Core.data.notes
      * @param {Note} note - The note instance to remove
      * @param {boolean} force - Option to force and avoid confirmation
      * @returns {boolean} Confirmation value
      */
     static removeNote(note, force = false) {
-        const confirmation = force || confirm('Are you sure?');
+        const confirmation = Switcher.closeTab(note.tab, force);
         if (confirmation) {
             if (Core.data.highlighted === note.uuid) {
                 Core.data.highlighted = null;
             }
-            Switcher.removeTab(note.tab, true);
             tools.remove(Note.instances, note);
             tools.remove(Core.data.opened, note.uuid);
             delete Core.data.notes[note.uuid];
@@ -345,12 +349,12 @@ class Core {
                 tab = addTableTab(uuid);
                 tab.notch.addEventListener('mousedown', (event) => {
                     if (event.button === 1) {
-                        Switcher.removeTab(tab, true);
+                        Switcher.closeTab(tab, true);
                     }
                 });
             }
             else {
-                Switcher.removeTab(tab, true);
+                Switcher.closeTab(tab, true);
             }
         });
 

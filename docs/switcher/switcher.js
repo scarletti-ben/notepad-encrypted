@@ -155,24 +155,12 @@ export class Switcher {
     }
 
     /** 
-     * Close a specific tab, the tab's notch and pane remain in the DOM
+     * Close a tab by removing that tab's notch and pane from the DOM
      * @param {Tab} tab - The tab instance to close
-     */
-    static closeTab(tab) {
-        this.frame.removeChild(tab.pane);
-        this.ribbon.removeChild(tab.notch);
-        tools.remove(this.tabs, tab);
-        console.log(`Switcher closed tab: ${tab.uuid}`);
-    }
-
-    /** 
-     * Remove a specific tab's notch and pane from the DOM
-     * @param {Tab} tab - The tab instance to remove
      * @param {boolean} force - Option to force and avoid confirmation
      * @returns {boolean} Confirmation value
      */
-    static removeTab(tab, force = false) {
-        // POSTIT - Is this not exactly the same as closeTab?
+    static closeTab(tab, force = false) {
         const confirmation = force || confirm('Are you sure?');
         if (confirmation) {
             tab.pane.remove();
