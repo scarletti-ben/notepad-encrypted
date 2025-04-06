@@ -78,4 +78,6 @@ export class Note {
         return Note.instances.find(note => note.uuid === noteUUID);
     }
 
+    // POSTIT - Add functionality for textarea and notch text to auto update data
+
 }
