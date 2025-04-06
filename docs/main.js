@@ -48,8 +48,7 @@ class Core {
             notes: {}
         }
         Core.data = data;
-        await this.encryptedSave(data, cryptoKey);
-        // Core.saveNow();
+        await Core.saveNow();
         console.log(`Core reset all data in localStorage`);
     }
 
@@ -118,16 +117,39 @@ class Core {
 
     }
 
+    // ! TODO: Document saving functionality
+
+    static savingNow = false;
+    static savingDelay = 5000;
+    static savingTimeout = null;
+
+    static saveSoon() {
+        if (this.savingTimeout || this.savingNow) {
+            return console.info('Save not queued');
+        } else {
+            console.info('Save queued');
+        }
+        this.savingTimeout = setTimeout(() => {
+            this.savingTimeout = null;
+            this.saveNow();
+        }, this.savingDelay);
+    }
+
     static async saveNow() {
-        await this.encryptedSave(Core.data, Core.cryptoKey);
-    }
-
-    static async saveSoon() {
-        await Core.saveNow();
-    }
-
-    static sync() {
-        // > Ensure all notes match data
+        if (this.savingNow) {
+            return console.info('Save not started')
+        } else {
+            console.info('Save started');
+        }
+        this.savingNow = true;
+        if (this.savingTimeout) {
+            window.clearTimeout(this.savingTimeout);
+            this.savingTimeout = null;
+        }
+        await this.encryptedSave(this.data, this.cryptoKey);
+        setTimeout(() => {
+            this.savingNow = false;
+        }, this.savingDelay);
     }
 
     // < ========================================================
@@ -333,12 +355,35 @@ class Core {
         });
 
         Core.addSprite('save', Switcher.header, () => {
-            Core.encryptedSave(Core.data, Core.cryptoKey);
+            Core.sync();
+            Core.saveNow();
         }).also((sprite) => {
+
             tools.respond('saved', () => {
-                showRotateHide(sprite);
+
+                sprite.swap('progress_activity');
+
+                sprite.rotate(2000).then(() => {
+                    sprite.swap('check_circle');
+                    setTimeout(() => {
+                        sprite.swap('save');
+                    }, 1000);
+                });
+
             })
+
         })
+
+        Core.addSprite().element.onclick = function() {
+            console.log(this);
+        }
+
+        let progressSprite = Core.addSprite('progress_activity', Switcher.top)
+        progressSprite.toggleHidden(true);
+        tools.respond('saved', () => {
+            progressSprite.toggleHidden(false);
+        })
+
         Core.addSprite('fullscreen', Switcher.header, () => {
             function toggleFullscreen() {
                 if (document.fullscreenElement) {
@@ -409,11 +454,25 @@ class Core {
             // > CTRL + S: Save notes
             if (event.ctrlKey && event.key === 's') {
                 event.preventDefault();
+                Core.sync();
                 Core.saveNow();
             }
 
         })
 
+    }
+
+    // < ========================================================
+    // < Not Currently Implemented Methods
+    // < ========================================================
+
+    static sync() {
+        // > Ensure data for all notes matches element text
+        for (let note of Note.instances) {
+            note.data.name = note.tab.notch.innerText;
+            note.data.text = note.textarea.value;
+        }
+        console.log('Core synced all open notes');
     }
 
 }
@@ -550,8 +609,7 @@ async function main() {
 
     }
 
-    // POSTIT - Need to debounce / bottleneck saving again
-    // Move saving wheel to Switcher.top
+    // ! TODO: Move saving wheel to Switcher.top
 
 }
 
