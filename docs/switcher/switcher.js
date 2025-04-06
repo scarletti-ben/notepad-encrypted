@@ -172,6 +172,7 @@ export class Switcher {
      * @returns {boolean} Confirmation value
      */
     static removeTab(tab, force = false) {
+        // POSTIT - Is this not exactly the same as closeTab?
         const confirmation = force || confirm('Are you sure?');
         if (confirmation) {
             tab.pane.remove();
