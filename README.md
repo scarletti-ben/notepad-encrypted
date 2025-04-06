@@ -3,16 +3,16 @@ The aims and constraints I gave myself before starting this were to
 - Have no reliance on external libraries or imports
 - Build entirely with "vanilla" `Javascript` / `HTML` / `CSS`
 - Build a notepad application with note tabs that you can switch between
-- Allow useers to create notes, close notes, open old notes
+- Allow users to create notes, close notes, open old notes
 - Allow notes to persist across sessions
 
-The less important feature I wanted to add as a proof of concept was an encrpytion system in which the notes in `localStorage` were encrypted using a user password.
+The less important feature I wanted to add as a proof of concept was an encryption system in which the notes in `localStorage` were encrypted using a user password.
 
 All of the above aims were met, and it has morphed into a modular `JavaScript` project with a few proof of concept modules that are rather rough around the edges. Both this README, and the project itself, are more learning tools for myself than anything else.
 
-### A Note On Compatability
+### A Note On Compatibility
 - Designed and tested in `Google Chrome Version 134.0.6998.178 (Official Build) (64-bit)`
-- As there is decent use of the `import` / `export` syntax introduced in `ECMAScript 6 (ES6)` / `ES2015` it is likely that compatability with older browsers is limited
+- As there is decent use of the `import` / `export` syntax introduced in `ECMAScript 6 (ES6)` / `ES2015` it is likely that compatibility with older browsers is limited
 - Not tested on other browsers, mobile devices, or other desktop devices
 
 # Repository Overview
@@ -21,7 +21,7 @@ All of the above aims were met, and it has morphed into a modular `JavaScript` p
 - [`fixed-table.css`](./docs/fixed-table/fixed-table.css)
 - [`fixed-table.js`](./docs/fixed-table/fixed-table.js)
 
-I started writing this script to gain a deeper undestanding of the structure of `HTML` tables, so that in the future I would never have to look at them again. The primary aim for the functionality of the `FixedTable` class is to use `JavaScript` to generate an `HTML` table that has a fixed number of columns, fits across a fixed width, and has limited functionality for resizing of columns. It is more suited to data viewing than data maniupulation, less a spreadsheet and more a lens.
+I started writing this script to gain a deeper understanding of the structure of `HTML` tables, so that in the future I would never have to look at them again. The primary aim for the functionality of the `FixedTable` class is to use `JavaScript` to generate an `HTML` table that has a fixed number of columns, fits across a fixed width, and has limited functionality for resizing of columns. It is more suited to data viewing than data manipulation, less a spreadsheet and more a lens.
 
 The structure for a basic `HTML` table might look something like the snippet below
 ```html
