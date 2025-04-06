@@ -10,6 +10,14 @@ The less important feature I wanted to add as a proof of concept was an encrypti
 
 All of the above aims were met, and it has morphed into a modular `JavaScript` project with a few proof of concept modules that are rather rough around the edges. Both this README, and the project itself, are more learning tools for myself than anything else.
 
+You can access the active site at https://scarletti-ben.github.io/notepad-encrypted/
+
+Some notes before using the site
+- The site makes no external requests, and as such does not send note data anywhere
+  - Regardless of this fact you can never be truly safe on the internet so do not use the site to save sensitive data
+- I hold no responsibility for the data in notes being deleted, corrupted, lost or stolen
+- I hold no responsibility for situations in which you have forgotten your encryption password or salt, in this case you will simply need to delete all notes and reset the application
+
 ### A Note On Compatibility
 - Designed and tested in `Google Chrome Version 134.0.6998.178 (Official Build) (64-bit)`
 - As there is decent use of the `import` / `export` syntax introduced in `ECMAScript 6 (ES6)` / `ES2015` it is likely that compatibility with older browsers is limited
