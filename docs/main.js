@@ -85,7 +85,6 @@ class Core {
     /** 
      * Text
      * - Dispatches `UserEvent` with flavour "loaded"
-     * @async
      * @param {CryptoKey} cryptoKey
      */
     static async decryptedLoad(cryptoKey) {
@@ -270,7 +269,6 @@ class Core {
         notch.addEventListener('blur', (event) => {
             if (notch.contentEditable) {
                 notch.contentEditable = false;
-                note.data.name = notch.innerText;
                 Core.saveSoon();
             }
         });
@@ -294,7 +292,6 @@ class Core {
 
         // > Save note text when textarea focus lost
         textarea.addEventListener('blur', (event) => {
-            note.data.text = textarea.value;
             Core.saveSoon();
         })
 
@@ -359,7 +356,6 @@ class Core {
         });
 
         Core.addSprite('save', Switcher.header, () => {
-            Core.sync();
             Core.saveNow();
         }).also((sprite) => {
 
@@ -458,25 +454,11 @@ class Core {
             // > CTRL + S: Save notes
             if (event.ctrlKey && event.key === 's') {
                 event.preventDefault();
-                Core.sync();
                 Core.saveNow();
             }
 
         })
 
-    }
-
-    // < ========================================================
-    // < Not Currently Implemented Methods
-    // < ========================================================
-
-    static sync() {
-        // > Ensure data for all notes matches element text
-        for (let note of Note.instances) {
-            note.data.name = note.tab.notch.innerText;
-            note.data.text = note.textarea.value;
-        }
-        console.log('Core synced all open notes');
     }
 
 }

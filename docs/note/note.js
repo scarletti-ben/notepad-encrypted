@@ -42,6 +42,7 @@ export class Note {
         this.data = data;
         this.textarea = this._createTextarea(data);
         this.tab = this._createTab(this.textarea);
+        this._applyListeners();
     }
 
     /**
@@ -67,6 +68,18 @@ export class Note {
         let tab = new Tab(this.uuid, element);
         tab.notch.innerText = this.data.name;
         return tab;
+    }
+
+    /** 
+     * Apply listeners to textarea and notch to ensure note.data is in sync
+     */
+    _applyListeners() {
+        this.textarea.addEventListener('input', () => {
+            this.data.text = this.textarea.value;
+        });
+        this.tab.notch.addEventListener('input', () => {
+            this.data.name = this.tab.notch.innerText;
+        });
     }
 
     /**

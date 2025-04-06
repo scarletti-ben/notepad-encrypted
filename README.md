@@ -286,9 +286,12 @@ constructor(uuid, data) {
     this.data = data;
     this.textarea = this._createTextarea(data);
     this.tab = this._createTab(this.textarea);
+    this._applyListeners();
 }
 ```
-The `_createTextarea` method creates a `<textarea>` element which will be used for the note text. The `_createTab` method creates a `<div>` element of `class='note'` to act as the parent of the `textarea`, and that same `div` is passed to `Tab` as the element to go in the `pane` of `Switcher` when the tab is open. The name of the note is going to be displayed in the `notch` of the `Tab` instance.
+The `_createTextarea` method creates a `<textarea>` element which will be used for the note text. The `_createTab` method creates a `<div>` element of `class='note'` to act as the parent of the `textarea`, and that same `div` is passed to `Tab` as the element to go in the `pane` of `Switcher` when the tab is open. The name of the note is going to be displayed in the `notch` of the `Tab` instance.#
+
+The `_applyListeners()` method adds `input` listeners for the `textarea` and `notch` so that their text is synced with `note.data` when the user edits element text.
 
 #### Useful `Note` Methods
 - `Note.getNote(noteUUID)` retrieves a `Note` instance from `Note.instances` by `uuid`
