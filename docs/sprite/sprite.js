@@ -80,16 +80,16 @@ export class Sprite {
     // ! ========================================================
 
     /** 
-     * Rotate this sprite's element n times, each for a given duration
+     * Rotate this sprite's element n times across a given duration
      * - Returns a Promise that resolves after 'animationend' event
      * - Allows .then chaining
      * - Uses 'animationend' event to avoid timing issues with setTimeout
-     * @param {number} [n=1] - The number of rotations to make
-     * @param {number} [duration=1000] - The duration in milliseconds
+     * @param {number} [duration=1000] - Time to complete all rotations in ms
+     * @param {number} [n=1] - The number of rotations to make in the given time
      * @returns {Promise} Promise that resolves after 'animationend' event
      */
-    rotate(n = 1, duration = 1000) {
-        return _rotate(this.element, n, duration);
+    rotate(duration = 1000, n = 1) {
+        return _rotate(this.element, duration, n);
     }
 
 }
@@ -99,19 +99,22 @@ export class Sprite {
 // < ========================================================
 
 /** 
- * Rotate an element n times, each for a given duration
+ * Rotate an element n times across a given duration
  * - Returns a Promise that resolves after 'animationend' event
  * - Allows .then chaining
  * - Uses 'animationend' event to avoid timing issues with setTimeout
  * @param {HTMLElement} element - The element to apply the rotation animation to
- * @param {number} [n=1] - The number of rotations to make
- * @param {number} [duration=1000] - The duration in milliseconds
+ * @param {number} [duration=1000] - Time to complete all rotations in ms
+ * @param {number} [n=1] - The number of rotations to make in the given time
  * @returns {Promise} Promise that resolves after 'animationend' event
  */
-function _rotate(element, n = 1, duration = 1000) {
+function _rotate(element, duration = 1000, n = 1) {
+
+    // > Calculate the duration of one full rotation
+    const rotationDuration = duration / n;
 
     // > Start animation, and reflow element
-    element.style.animation = `rotate ${duration}ms linear ${n}`;
+    element.style.animation = `rotate ${rotationDuration}ms linear ${n}`;
     tools.reflow(element);
 
     // > Return Promise that resolves after 'animationend' event
@@ -150,6 +153,59 @@ function _rotate(element, n = 1, duration = 1000) {
     });
 
 }
+
+// /** 
+//  * Rotate an element n times, each for a given duration
+//  * - Returns a Promise that resolves after 'animationend' event
+//  * - Allows .then chaining
+//  * - Uses 'animationend' event to avoid timing issues with setTimeout
+//  * @param {HTMLElement} element - The element to apply the rotation animation to
+//  * @param {number} [n=1] - The number of rotations to make
+//  * @param {number} [duration=1000] - The duration in milliseconds
+//  * @returns {Promise} Promise that resolves after 'animationend' event
+//  */
+// function _rotate(element, n = 1, duration = 1000) {
+
+//     // > Start animation, and reflow element
+//     element.style.animation = `rotate ${duration}ms linear ${n}`;
+//     tools.reflow(element);
+
+//     // > Return Promise that resolves after 'animationend' event
+//     return new Promise((resolve, reject) => {
+
+//         function handleAnimationEnd() {
+
+//             // > Remove the event listeners
+//             element.removeEventListener('animationend', handleAnimationEnd);
+//             element.removeEventListener('animationcancel', handleAnimationCancel);
+
+//             // > Disable animation, and reflow element
+//             element.style.animation = '';
+//             tools.reflow(element);
+
+//             // > Resolve the Promise
+//             resolve();
+
+//         }
+
+//         function handleAnimationCancel() {
+
+//             // > Remove the event listeners
+//             element.removeEventListener('animationcancel', handleAnimationCancel);
+//             element.removeEventListener('animationend', handleAnimationEnd);
+
+//             // > Reject the Promise
+//             reject();
+
+//         }
+
+//         // > Add the event listeners
+//         element.addEventListener('animationend', handleAnimationEnd);
+//         element.addEventListener('animationcancel', handleAnimationCancel);
+
+//     });
+
+// }
 
 /** 
  * Animate an element using the given arguments
