@@ -30,17 +30,19 @@ class Core {
      * Initialise the Core with a given CryptoKey object
      * @param {CryptoKey} cryptoKey
      */
-    static async init(cryptoKey) {
+    static async init(cryptoKey, reset = false) {
         this.cryptoKey = cryptoKey;
+        if (reset) {
+            await this._reset();
+        }
         this.data = await this.decryptedLoad(this.cryptoKey);
         window.Core = Core;
     }
 
     /** 
      * Reset the Core
-     * @param {CryptoKey} cryptoKey
      */
-    static async reset(cryptoKey) {
+    static async _reset() {
         console.log('resetting')
         let data = {
             highlighted: null,
@@ -331,7 +333,7 @@ class Core {
             tools.selectAll(note.tab.notch);
         });
         Core.addSprite('delete_history', Switcher.header, () => {
-            Core.reset(Core.cryptoKey);
+            Core._reset();
         });
 
         let first = Core.addSprite('top_panel_open', Switcher.top, () => {
@@ -574,6 +576,8 @@ async function main() {
 
     try {
 
+        Core.initWindowTools();
+
         Switcher.init('page', true, false, true);
 
         // let password = prompt('Password: ')
@@ -581,9 +585,9 @@ async function main() {
         let password = 'password'
         let salt = 'salt'
         let key = await tools.PBKDF2(password, salt);
+        
         await Core.init(key);
-
-        Core.initWindowTools();
+        
         Core.initNotes();
         Core.initSprites();
         Core.initListeners();
